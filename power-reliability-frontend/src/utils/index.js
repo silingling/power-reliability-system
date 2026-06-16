@@ -1,5 +1,4 @@
 /**
- * Created by jiachenpan on 16/11/18.
  */
 
 export function parseTime(time, cFormat) {
@@ -219,7 +218,7 @@ export function canPreviewFile(name) {
 export function wkPreviewFile(path, name) {
   // const urlS = path.split('?')
   // const url = urlS.length > 1 ? urlS[1] : ''
-  // https://file.72crm.com/onlinePreview?fileId=949051ca66ed45ca8a1bacae0e862d32
+  // https://file.tongye.com/onlinePreview
   // window.open(`${WKConfig.getLocationOrigin()}/file/onlinePreview?${url}`)
   // http://dev.5kcrm.cn/file/preview?id=xxx
   window.open(`${WKConfig.getLocationOrigin()}/file/preview?url=${path}?fullfilename=${name || ''}`)
@@ -725,7 +724,7 @@ function s2ab(s) {
 }
 
 /**
- * 获取百度地图
+ * 获取地图
  */
 export function getBaiduMap() {
   if (!global.BMap) {

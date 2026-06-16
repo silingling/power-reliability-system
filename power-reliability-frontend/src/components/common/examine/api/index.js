@@ -1,5 +1,5 @@
 /**
- * Create by yxk at 2020/6/22
+ * API 接口
  */
 import request from '@/utils/request'
 

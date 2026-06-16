@@ -16,7 +16,7 @@ import java.util.List;
  *
  * 每 5 分钟扫描所有未发送的 Notification 记录，模拟发送后标记为已读。
  * 实际生产环境可扩展为：
- * - 短信网关（阿里云/腾讯云 SMS）
+ * - 短信网关 SMS
  * - 邮件 SMTP
  * - 飞书消息（Lark Open API）
  * - Webhook 回调

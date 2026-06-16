@@ -1,5 +1,4 @@
 /**
- * Created by yxk at 2020/6/1
  * 单个自定义字段生成校验规则
  */
 import {

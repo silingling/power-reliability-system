@@ -1,11 +1,9 @@
 /**
- * Create by yxk at 2020/6/11
  * 数学运算
  */
 
 /**
  * 两个浮点数求和
- * @author yxk
  * @param num1
  * @param num2
  * @return {number}
@@ -29,7 +27,6 @@ export function accAdd(num1, num2) {
 
 /**
  * 两个浮点数相减
- * @author yxk
  * @param num1
  * @param num2
  * @return {number}
@@ -52,7 +49,6 @@ export function accSub(num1, num2) {
 
 /**
  * 两个浮点数相乘
- * @author yxk
  * @param num1
  * @param num2
  * @return {number}
@@ -76,7 +72,6 @@ export function accMul(num1, num2) {
 
 /**
  * 两个浮点数相除
- * @author yxk
  * @param num1
  * @param num2
  * @return {number}

@@ -1,5 +1,4 @@
 /**
- * Created by Administrator on 2018/12/27.
  */
 import Gante from './gante.vue'
 export default {
