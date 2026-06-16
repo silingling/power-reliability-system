@@ -1,0 +1,182 @@
+version: '3.8'
+
+services:
+  # ===== Database & Cache =====
+  mysql:
+    image: mysql:8.0
+    container_name: pr-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: power_reliability
+    ports:
+      - "3306:3306"
+    volumes:
+      - pr-mysql-data:/var/lib/mysql
+      - ./docs/sql/init-database.sql:/docker-entrypoint-initdb.d/init.sql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    networks:
+      - pr-network
+
+  redis:
+    image: redis:6.0
+    container_name: pr-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - pr-network
+
+  # ===== Nacos (Service Registry & Config) =====
+  nacos:
+    image: nacos/nacos-server:v2.2.3
+    container_name: pr-nacos
+    environment:
+      MODE: standalone
+      PREFER_HOST_MODE: hostname
+    ports:
+      - "8848:8848"
+    networks:
+      - pr-network
+
+  # ===== Backend Microservices =====
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE: power-reliability-gateway
+    container_name: pr-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+    depends_on:
+      - nacos
+    networks:
+      - pr-network
+
+  ledger:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE: power-reliability-ledger
+    container_name: pr-ledger
+    ports:
+      - "8081:8081"
+    depends_on:
+      - nacos
+      - mysql
+    networks:
+      - pr-network
+
+  outage:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE: power-reliability-outage
+    container_name: pr-outage
+    ports:
+      - "8082:8082"
+    depends_on:
+      - nacos
+      - mysql
+    networks:
+      - pr-network
+
+  governance:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE: power-reliability-governance
+    container_name: pr-governance
+    ports:
+      - "8083:8083"
+    depends_on:
+      - nacos
+      - mysql
+    networks:
+      - pr-network
+
+  index:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE: power-reliability-index
+    container_name: pr-index
+    ports:
+      - "8084:8084"
+    depends_on:
+      - nacos
+      - mysql
+    networks:
+      - pr-network
+
+  warning:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE: power-reliability-warning
+    container_name: pr-warning
+    ports:
+      - "8085:8085"
+    depends_on:
+      - nacos
+      - mysql
+    networks:
+      - pr-network
+
+  review:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE: power-reliability-review
+    container_name: pr-review
+    ports:
+      - "8086:8086"
+    depends_on:
+      - nacos
+      - mysql
+    networks:
+      - pr-network
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE: power-reliability-dashboard
+    container_name: pr-dashboard
+    ports:
+      - "8087:8087"
+    depends_on:
+      - nacos
+      - mysql
+    networks:
+      - pr-network
+
+  system-srv:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE: power-reliability-system-srv
+    container_name: pr-system-srv
+    ports:
+      - "8088:8088"
+    depends_on:
+      - nacos
+      - mysql
+    networks:
+      - pr-network
+
+networks:
+  pr-network:
+    driver: bridge
+
+volumes:
+  pr-mysql-data:

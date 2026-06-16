@@ -1,0 +1,42 @@
+server:
+  port: 8080
+spring:
+  application:
+    name: power-reliability-gateway
+  cloud:
+    gateway:
+      routes:
+        - id: ledger-service
+          uri: lb://power-reliability-ledger
+          predicates:
+            - Path=/api/ledger/**
+        - id: outage-service
+          uri: lb://power-reliability-outage
+          predicates:
+            - Path=/api/outage/**
+        - id: governance-service
+          uri: lb://power-reliability-governance
+          predicates:
+            - Path=/api/governance/**
+        - id: index-service
+          uri: lb://power-reliability-index
+          predicates:
+            - Path=/api/index/**
+        - id: warning-service
+          uri: lb://power-reliability-warning
+          predicates:
+            - Path=/api/warning/**
+        - id: review-service
+          uri: lb://power-reliability-review
+          predicates:
+            - Path=/api/review/**
+        - id: dashboard-service
+          uri: lb://power-reliability-dashboard
+          predicates:
+            - Path=/api/dashboard/**
+        - id: system-service
+          uri: lb://power-reliability-system-srv
+          predicates:
+            - Path=/api/system/**
+  main:
+    web-application-type: reactive
