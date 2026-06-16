@@ -8,28 +8,28 @@ export function removeAuth() {
   return new Promise((resolve, reject) => {
     cache.rmAxiosCache()
     store.commit('SET_ALLAUTH', null)
-    delete axios.defaults.headers['Admin-Token']
+    delete axios.defaults.headers['Authorization']
     resolve(true)
   })
 }
 
-/** 注入授权信息 */
-export function addAuth(adminToken) {
+/** 注入授权信息 (存储JWT token, 发送时添加 Authorization: Bearer 前缀) */
+export function addAuth(token) {
   return new Promise((resolve, reject) => {
-    axios.defaults.headers['Admin-Token'] = adminToken
-    // store.dispatch('SystemLogoAndName')
+    Lockr.set('Admin-Token', token)
+    axios.defaults.headers['Authorization'] = 'Bearer ' + token
     resolve(true)
   })
 }
 
-/** 获取授权信息 */
+/** 获取授权状态 */
 export function getAuth() {
-  /** 全局路由触发这个方法  如果有缓存暂时在这里交与 */
-  if (Lockr.get('Admin-Token') && !axios.defaults.headers['Admin-Token']) {
-    cache.updateAxiosCache()
+  /** 从Lockr恢复授权状态 */
+  if (Lockr.get('Admin-Token') && !axios.defaults.headers['Authorization']) {
+    cache.updateAxiosHeaders()
   }
 
-  if (axios.defaults.headers['Admin-Token']) {
+  if (axios.defaults.headers['Authorization']) {
     return true
   }
   return false

@@ -62,6 +62,9 @@ public class OutageEvent {
     @Excel(name = "闭环时间", sort = 14, width = 20)
     private LocalDateTime closeTime;
 
+    /** 是否归档: 0-否 1-是 */
+    private Integer isArchived;
+
     @Excel(name = "备注", sort = 15, width = 30)
     private String remarks;
 

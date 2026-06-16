@@ -34,9 +34,13 @@ public class AuthGlobalFilter implements GlobalFilter, Ordered {
     private JwtUtil jwtUtil;
 
     private final List<String> whiteList = Arrays.asList(
-            "/api/system/login",
-            "/api/system/register",
-            "/api/system/captcha",
+            "/api/system/auth/login",
+            "/api/system/auth/logout",
+            "/api/system/auth/init",
+            "/api/system/auth/status",
+            "/api/system/auth/verifyCode",
+            "/api/system/auth/register",
+            "/api/system/auth/captcha",
             "/api/dashboard/**"
     );
 

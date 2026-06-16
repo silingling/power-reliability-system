@@ -74,7 +74,7 @@
       //附件
       httpHeader() {
         return {
-          'Admin-Token': axios.defaults.headers['Admin-Token']
+          'Authorization': axios.defaults.headers['Authorization']
         }
       },
       crmFileSaveUrl() {

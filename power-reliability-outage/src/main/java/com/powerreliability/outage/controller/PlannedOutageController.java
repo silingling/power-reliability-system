@@ -6,6 +6,8 @@ import com.powerreliability.common.entity.PageResult;
 import com.powerreliability.common.entity.Result;
 import com.powerreliability.common.util.ExcelExportUtil;
 import com.powerreliability.outage.entity.PlannedOutage;
+import com.powerreliability.outage.entity.OutageEvent;
+import com.powerreliability.outage.mapper.OutageEventMapper;
 import com.powerreliability.outage.service.PlannedOutageService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.servlet.http.HttpServletResponse;
@@ -22,6 +24,9 @@ public class PlannedOutageController {
 
     @Autowired
     private PlannedOutageService plannedOutageService;
+
+    @Autowired
+    private OutageEventMapper outageEventMapper;
 
     @GetMapping("/list")
     @Operation(summary = "分页查询计划停电列表")
@@ -65,7 +70,7 @@ public class PlannedOutageController {
     }
 
     @PostMapping("/submit")
-    @Operation(summary = "提交计划停电申请")
+    @Operation(summary = "提交计划停电申请（含「5次/年、60天/3次」合规校验）")
     public Result<Void> submit(@RequestBody PlannedOutage plannedOutage) {
         if (plannedOutage.getPlanStartTime() == null || plannedOutage.getPlanEndTime() == null) {
             return Result.fail("计划停电时间不能为空");
@@ -74,9 +79,69 @@ public class PlannedOutageController {
             return Result.fail("计划复电时间不能早于计划停电时间");
         }
 
+        // ===== 「5次/年、60天/3次」新政合规校验 =====
+        Long eventId = plannedOutage.getEventId();
+        Long areaId = null;
+        String areaName = "";
+
+        if (eventId != null) {
+            OutageEvent event = outageEventMapper.selectById(eventId);
+            if (event != null) {
+                areaId = event.getAreaId();
+                areaName = event.getAreaName();
+            }
+        }
+
+        if (areaId == null) {
+            plannedOutage.setComplianceCheck(1);
+            plannedOutage.setComplianceDetail("无关联停电事件，跳过频次校验");
+        } else {
+            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime yearAgo = now.minusYears(1);
+            LocalDateTime sixtyDaysAgo = now.minusDays(60);
+
+            // 查询该台区近一年已闭环停电事件
+            LambdaQueryWrapper<OutageEvent> yearWrapper = new LambdaQueryWrapper<>();
+            yearWrapper.eq(OutageEvent::getAreaId, areaId)
+                    .eq(OutageEvent::getIsClosed, 1)
+                    .ge(OutageEvent::getOutageStartTime, yearAgo);
+            long yearCount = outageEventMapper.selectCount(yearWrapper);
+
+            // 查询该台区近60天已闭环停电事件
+            LambdaQueryWrapper<OutageEvent> days60Wrapper = new LambdaQueryWrapper<>();
+            days60Wrapper.eq(OutageEvent::getAreaId, areaId)
+                    .eq(OutageEvent::getIsClosed, 1)
+                    .ge(OutageEvent::getOutageStartTime, sixtyDaysAgo);
+            long days60Count = outageEventMapper.selectCount(days60Wrapper);
+
+            boolean yearCheckFailed = yearCount >= 5;
+            boolean dayCheckFailed = days60Count >= 3;
+
+            if (yearCheckFailed || dayCheckFailed) {
+                StringBuilder detail = new StringBuilder("合规校验未通过: ");
+                if (yearCheckFailed) {
+                    detail.append("近一年已停电").append(yearCount).append("次（阈值5次）");
+                }
+                if (dayCheckFailed) {
+                    if (yearCheckFailed) detail.append("; ");
+                    detail.append("近60天已停电").append(days60Count).append("次（阈值3次）");
+                }
+                detail.append("。台区[").append(areaName).append("]");
+
+                plannedOutage.setComplianceCheck(0);
+                plannedOutage.setComplianceDetail(detail.toString());
+                plannedOutage.setApprovalStatus(0);
+                plannedOutage.setExecutionStatus(0);
+                plannedOutageService.save(plannedOutage);
+                return Result.fail(detail.toString());
+            } else {
+                plannedOutage.setComplianceCheck(1);
+                plannedOutage.setComplianceDetail("合规校验通过: 近一年停电" + yearCount + "次（<5），近60天停电" + days60Count + "次（<3）");
+            }
+        }
+
         plannedOutage.setApprovalStatus(0);
         plannedOutage.setExecutionStatus(0);
-        plannedOutage.setComplianceCheck(1);
 
         plannedOutageService.save(plannedOutage);
         return Result.ok();
