@@ -48,5 +48,11 @@ spring:
           uri: lb://power-reliability-job
           predicates:
             - Path=/api/job/**
+    sentinel:
+      transport:
+        dashboard: localhost:8080
+      eager: true
+      filter:
+        enabled: true
   main:
     web-application-type: reactive

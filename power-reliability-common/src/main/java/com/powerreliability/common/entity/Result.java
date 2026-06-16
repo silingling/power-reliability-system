@@ -11,6 +11,10 @@ public class Result<T> implements Serializable {
 
     private Result() {}
 
+    public static <T> Result<T> success() { return ok(null); }
+
+    public static <T> Result<T> success(T data) { return ok(data); }
+
     public static <T> Result<T> ok() { return ok(null); }
 
     public static <T> Result<T> ok(T data) {
@@ -40,5 +44,9 @@ public class Result<T> implements Serializable {
         r.code = code;
         r.msg = msg;
         return r;
+    }
+
+    public static <T> Result<T> error(String msg) {
+        return error(-1, msg);
     }
 }

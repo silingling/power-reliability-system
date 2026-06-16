@@ -144,6 +144,25 @@ CREATE TABLE equipment_defect (
     KEY idx_defect_type (defect_type)
 ) COMMENT '设备缺陷记录表';
 
+-- 1.6 台账合规校验记录表
+CREATE TABLE ledger_validation_record (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '主键',
+    target_table VARCHAR(50) NOT NULL COMMENT '目标表名（tr_area/consumer/equipment/line）',
+    target_id BIGINT NOT NULL COMMENT '目标记录ID',
+    validation_type VARCHAR(20) NOT NULL COMMENT '校验类型: COMPLETENESS/LOGICAL/STANDARD',
+    field_name VARCHAR(100) COMMENT '字段名',
+    field_value VARCHAR(500) COMMENT '字段当前值',
+    issue_desc TEXT COMMENT '问题描述',
+    severity_level VARCHAR(20) DEFAULT 'ERROR' COMMENT '严重级别: ERROR/WARNING',
+    status TINYINT DEFAULT 0 COMMENT '修复状态: 0-未修复 1-已修复',
+    is_deleted TINYINT DEFAULT 0 COMMENT '逻辑删除',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    KEY idx_target_table (target_table),
+    KEY idx_status (status),
+    KEY idx_target_table_status (target_table, status)
+) COMMENT '台账合规校验记录表';
+
 -- ==================== 2. 停电事件管理 ====================
 
 -- 2.1 停电事件主表
@@ -762,6 +781,30 @@ INSERT INTO sys_config (config_key, config_value, config_desc) VALUES
 ('warning_risk_score_medium', '50', '中风险阈值'),
 ('governance_deadline_high', '24', '高危隐患处置时限(小时)'),
 ('governance_deadline_medium', '48', '中风险处置时限(小时)');
+
+-- ==================== 10. 报表模板 ====================
+
+-- 10.1 报表模板配置表
+CREATE TABLE report_template (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY COMMENT '主键',
+    template_code VARCHAR(50) NOT NULL COMMENT '模板编码: MONTHLY/QUARTERLY/ANNUAL',
+    template_name VARCHAR(200) NOT NULL COMMENT '模板名称',
+    description TEXT COMMENT '模板描述',
+    template_config JSON COMMENT '模板配置（JSON）',
+    is_default TINYINT DEFAULT 0 COMMENT '是否默认: 0-否 1-是',
+    is_deleted TINYINT DEFAULT 0 COMMENT '逻辑删除',
+    create_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    update_time DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY uk_template_code (template_code)
+) COMMENT '报表模板配置表';
+
+-- 默认报表模板数据
+INSERT INTO report_template (template_code, template_name, description, template_config, is_default) VALUES
+('MONTHLY', '月度可靠性报表', '月度供电可靠性合规报表，含日分解数据、月度汇总及阈值比对', '{"sections":["header","daily_breakdown","monthly_summary","threshold_comparison"],"metrics":["SAIDI","SAIFI","CAIDI","ASAI","ENS"]}', 1),
+('QUARTERLY', '季度可靠性报表', '季度供电可靠性分析报表，含月度分解及季度趋势', '{"sections":["header","monthly_breakdown","quarterly_summary","trend_analysis"],"metrics":["SAIDI","SAIFI","CAIDI","ASAI","ENS"]}', 1),
+('ANNUAL', '年度可靠性报表', '年度供电可靠性综合分析报表，含月度/季度趋势及同比分析', '{"sections":["header","monthly_breakdown","yearly_summary","yoy_comparison","hotspot_analysis"],"metrics":["SAIDI","SAIFI","CAIDI","ASAI","AENS"]}', 1);
+
+-- ==================== 11. 默认字典 ====================
 
 -- 默认字典
 INSERT INTO sys_dict (dict_type, dict_label, dict_value, sort_order) VALUES
