@@ -3,13 +3,18 @@ package com.powerreliability.governance.controller;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.powerreliability.common.entity.Result;
+import com.powerreliability.common.util.ExcelExportUtil;
 import com.powerreliability.governance.entity.GovernanceOrder;
 import com.powerreliability.governance.exception.GovernanceException;
 import com.powerreliability.governance.service.GovernanceOrderService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -18,6 +23,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/governance")
 @RequiredArgsConstructor
+@Tag(name = "治理工单管理")
 public class GovernanceOrderController {
 
     private final GovernanceOrderService governanceOrderService;
@@ -103,5 +109,34 @@ public class GovernanceOrderController {
         } catch (GovernanceException e) {
             return Result.error(e.getMessage());
         }
+    }
+
+    /**
+     * 导出治理工单Excel
+     */
+    @PostMapping("/order/export")
+    @Operation(summary = "导出治理工单Excel")
+    public void export(@RequestBody Map<String, Object> params, HttpServletResponse response) {
+        LambdaQueryWrapper<GovernanceOrder> wrapper = new LambdaQueryWrapper<>();
+
+        if (params.get("status") != null && !params.get("status").toString().isEmpty()) {
+            wrapper.eq(GovernanceOrder::getStatus, Integer.parseInt(params.get("status").toString()));
+        }
+        if (params.get("eventId") != null && !params.get("eventId").toString().isEmpty()) {
+            wrapper.eq(GovernanceOrder::getEventId, params.get("eventId").toString());
+        }
+        if (params.get("responsibleUnit") != null && !params.get("responsibleUnit").toString().isEmpty()) {
+            wrapper.eq(GovernanceOrder::getResponsibleUnit, params.get("responsibleUnit").toString());
+        }
+        if (params.get("responsiblePerson") != null && !params.get("responsiblePerson").toString().isEmpty()) {
+            wrapper.eq(GovernanceOrder::getResponsiblePerson, params.get("responsiblePerson").toString());
+        }
+        if (params.get("orderNo") != null && !params.get("orderNo").toString().isEmpty()) {
+            wrapper.like(GovernanceOrder::getOrderNo, params.get("orderNo").toString());
+        }
+
+        wrapper.orderByDesc(GovernanceOrder::getCreateTime);
+        List<GovernanceOrder> list = governanceOrderService.list(wrapper);
+        ExcelExportUtil.export(response, list, "治理工单导出");
     }
 }

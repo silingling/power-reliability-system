@@ -24,6 +24,8 @@
         <module>power-reliability-dashboard</module>
         <module>power-reliability-system-srv</module>
         <module>power-reliability-api</module>
+        <module>power-reliability-job</module>
+        <module>power-reliability-notification</module>
     </modules>
 
     <properties>
