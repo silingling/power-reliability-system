@@ -1,4 +1,5 @@
-import { getAuth, setAuth, removeAuth } from '@/utils/auth'
+import { loginAPI, logoutAPI } from '@/api/login'
+import { getAuth, addAuth, removeAuth } from '@/utils/auth'
 
 const user = {
   state: {
@@ -22,6 +23,21 @@ const user = {
     }
   },
   actions: {
+    Login({ commit }, userInfo) {
+      return new Promise((resolve, reject) => {
+        loginAPI(userInfo).then(response => {
+          const data = response.data || response
+          addAuth(data.token)
+          commit('SET_TOKEN', true)
+          commit('SET_ID', data.userInfo ? data.userInfo.id : '')
+          commit('SET_NAME', data.userInfo ? data.userInfo.username : '')
+          commit('SET_ROLES', data.permissions || [])
+          resolve(response)
+        }).catch(error => {
+          reject(error)
+        })
+      })
+    },
     getAuth({ commit }) {
       return new Promise((resolve) => {
         const token = getAuth()
@@ -33,6 +49,7 @@ const user = {
     },
     LogOut({ commit }) {
       return new Promise((resolve) => {
+        logoutAPI().catch(() => {})
         removeAuth()
         commit('SET_TOKEN', '')
         commit('SET_ROLES', [])

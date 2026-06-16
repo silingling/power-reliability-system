@@ -1,10 +1,10 @@
 import request from '@/utils/request'
 
-const BASE = '/powerReliability/index'
+const BASE = '/api/index'
 
 // 指标核算
 export function getIndexStatistics(data) {
-  return request({ url: `${BASE}/statistics`, method: 'post', data })
+  return request({ url: `${BASE}/list`, method: 'get', params: data })
 }
 export function calculateIndex(data) {
   return request({ url: `${BASE}/calculate`, method: 'post', data })
@@ -12,15 +12,15 @@ export function calculateIndex(data) {
 
 // 趋势分析
 export function getTrendData(data) {
-  return request({ url: `${BASE}/trend`, method: 'post', data })
+  return request({ url: `${BASE}/list`, method: 'get', params: data })
 }
 
 // 对比分析
 export function getCompareData(data) {
-  return request({ url: `${BASE}/compare`, method: 'post', data })
+  return request({ url: `${BASE}/compare`, method: 'get', params: data })
 }
 
 // 预警列表
 export function getIndexWarningList(data) {
-  return request({ url: `${BASE}/warning/list`, method: 'post', data })
+  return request({ url: `${BASE}/alert/list`, method: 'get', params: data })
 }

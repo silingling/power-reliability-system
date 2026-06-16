@@ -98,6 +98,16 @@ public class RiskWarningOrderController {
         return Result.ok("处置成功");
     }
 
+    @Operation(summary = "更新预警工单")
+    @PutMapping("/order/update")
+    public Result<Void> update(@RequestBody RiskWarningOrder order) {
+        if (order.getId() == null) {
+            return Result.fail("工单ID不能为空");
+        }
+        riskWarningOrderService.updateById(order);
+        return Result.ok();
+    }
+
     @Operation(summary = "复核预警工单")
     @PostMapping("/order/review/{id}")
     public Result<String> review(@PathVariable Long id, @RequestBody ReviewRequest request) {

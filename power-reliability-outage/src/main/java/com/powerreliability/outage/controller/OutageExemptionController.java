@@ -67,4 +67,14 @@ public class OutageExemptionController {
         }
         return Result.ok();
     }
+
+    @PutMapping("/update")
+    @Operation(summary = "更新豁免停电记录")
+    public Result<Void> update(@RequestBody OutageExemption exemption) {
+        if (exemption.getId() == null) {
+            return Result.fail("ID不能为空");
+        }
+        outageExemptionService.updateById(exemption);
+        return Result.ok();
+    }
 }

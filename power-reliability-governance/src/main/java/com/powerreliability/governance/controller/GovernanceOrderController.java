@@ -3,6 +3,7 @@ package com.powerreliability.governance.controller;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.powerreliability.common.entity.Result;
+import com.powerreliability.common.entity.PageResult;
 import com.powerreliability.common.util.ExcelExportUtil;
 import com.powerreliability.governance.entity.GovernanceOrder;
 import com.powerreliability.governance.exception.GovernanceException;
@@ -51,7 +52,8 @@ public class GovernanceOrderController {
             wrapper.eq(GovernanceOrder::getResponsibleUnit, responsibleUnit);
         }
         wrapper.orderByDesc(GovernanceOrder::getCreateTime);
-        return Result.success(governanceOrderService.page(page, wrapper));
+        Page<GovernanceOrder> resultPage = governanceOrderService.page(page, wrapper);
+        return Result.ok(PageResult.of(resultPage.getRecords(), resultPage.getTotal(), (int) resultPage.getCurrent(), (int) resultPage.getSize()));
     }
 
     /**
@@ -66,7 +68,7 @@ public class GovernanceOrderController {
         order.setCreateTime(LocalDateTime.now());
         order.setUpdateTime(LocalDateTime.now());
         governanceOrderService.save(order);
-        return Result.success(order);
+        return Result.ok(order);
     }
 
     /**
@@ -81,9 +83,9 @@ public class GovernanceOrderController {
         String deadline = params.get("deadline").toString();
         try {
             governanceOrderService.dispatch(id, unit, person, deadline);
-            return Result.success();
+            return Result.ok();
         } catch (GovernanceException e) {
-            return Result.error(e.getMessage());
+            return Result.fail(e.getMessage());
         }
     }
 
@@ -95,9 +97,9 @@ public class GovernanceOrderController {
     public Result<Void> submit(@PathVariable Long id) {
         try {
             governanceOrderService.submitForReview(id);
-            return Result.success();
+            return Result.ok();
         } catch (GovernanceException e) {
-            return Result.error(e.getMessage());
+            return Result.fail(e.getMessage());
         }
     }
 
@@ -110,9 +112,9 @@ public class GovernanceOrderController {
         Integer result = Integer.parseInt(params.get("result").toString());
         try {
             governanceOrderService.acceptReview(id, result);
-            return Result.success();
+            return Result.ok();
         } catch (GovernanceException e) {
-            return Result.error(e.getMessage());
+            return Result.fail(e.getMessage());
         }
     }
 
@@ -147,5 +149,18 @@ public class GovernanceOrderController {
         wrapper.orderByDesc(GovernanceOrder::getCreateTime);
         List<GovernanceOrder> list = governanceOrderService.list(wrapper);
         ExcelExportUtil.export(response, list, "治理工单导出");
+    }
+
+    /**
+     * 更新工单
+     */
+    @PutMapping("/order/update")
+    @Operation(summary = "更新治理工单")
+    public Result<Void> update(@RequestBody GovernanceOrder order) {
+        if (order.getId() == null) {
+            return Result.fail("工单ID不能为空");
+        }
+        governanceOrderService.updateById(order);
+        return Result.ok();
     }
 }

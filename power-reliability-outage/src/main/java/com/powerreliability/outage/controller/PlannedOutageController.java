@@ -126,6 +126,16 @@ public class PlannedOutageController {
         return Result.ok();
     }
 
+    @PutMapping("/update")
+    @Operation(summary = "更新计划停电")
+    public Result<Void> update(@RequestBody PlannedOutage plannedOutage) {
+        if (plannedOutage.getId() == null) {
+            return Result.fail("ID不能为空");
+        }
+        plannedOutageService.updateById(plannedOutage);
+        return Result.ok();
+    }
+
     @PostMapping("/verify")
     @Operation(summary = "核验计划停电")
     public Result<Void> verify(@RequestBody Map<String, Object> params) {

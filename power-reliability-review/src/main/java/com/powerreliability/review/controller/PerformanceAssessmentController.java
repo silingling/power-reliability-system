@@ -83,6 +83,18 @@ public class PerformanceAssessmentController {
         return Result.ok("绩效评分计算完成，共计算 " + count + " 条记录");
     }
 
+    @Operation(summary = "核验绩效考核结果")
+    @PostMapping("/verify/{id}")
+    public Result<Void> verify(@PathVariable Long id) {
+        PerformanceAssessment assessment = performanceAssessmentService.getById(id);
+        if (assessment == null) {
+            return Result.fail("考核记录不存在");
+        }
+        assessment.setAssessmentStatus(3); // 已核验
+        performanceAssessmentService.updateById(assessment);
+        return Result.ok();
+    }
+
     @Operation(summary = "查询绩效考核详情")
     @GetMapping("/detail/{id}")
     public Result<PerformanceAssessment> detail(@PathVariable Long id) {

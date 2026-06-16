@@ -86,6 +86,13 @@ public class OutageEventController {
         return Result.ok();
     }
 
+    @DeleteMapping("/event/delete/{id}")
+    @Operation(summary = "删除停电事件")
+    public Result<Void> delete(@PathVariable Long id) {
+        outageEventService.removeById(id);
+        return Result.ok();
+    }
+
     /**
      * 构建通用查询条件
      */

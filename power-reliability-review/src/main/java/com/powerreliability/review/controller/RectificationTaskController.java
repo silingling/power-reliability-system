@@ -89,6 +89,16 @@ public class RectificationTaskController {
         return Result.ok("整改任务已完成");
     }
 
+    @Operation(summary = "更新整改任务")
+    @PutMapping("/update")
+    public Result<Void> update(@RequestBody RectificationTask task) {
+        if (task.getId() == null) {
+            return Result.fail("任务ID不能为空");
+        }
+        rectificationTaskService.updateById(task);
+        return Result.ok();
+    }
+
     @Operation(summary = "验收整改任务")
     @PostMapping("/accept/{id}")
     public Result<String> accept(@PathVariable Long id, @RequestBody AcceptRequest request) {

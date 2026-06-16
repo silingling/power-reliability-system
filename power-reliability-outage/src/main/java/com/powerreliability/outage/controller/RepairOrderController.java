@@ -97,4 +97,14 @@ public class RepairOrderController {
         repairOrderService.verifyRepair(id, result);
         return Result.ok();
     }
+
+    @PutMapping("/update")
+    @Operation(summary = "更新抢修单")
+    public Result<Void> update(@RequestBody RepairOrder repairOrder) {
+        if (repairOrder.getId() == null) {
+            return Result.fail("ID不能为空");
+        }
+        repairOrderService.updateById(repairOrder);
+        return Result.ok();
+    }
 }

@@ -84,4 +84,14 @@ public class FaultOutageController {
         }
         return Result.ok(faultOutage);
     }
+
+    @PutMapping("/update")
+    @Operation(summary = "更新故障停电记录")
+    public Result<Void> update(@RequestBody FaultOutage faultOutage) {
+        if (faultOutage.getId() == null) {
+            return Result.fail("ID不能为空");
+        }
+        faultOutageService.updateById(faultOutage);
+        return Result.ok();
+    }
 }
