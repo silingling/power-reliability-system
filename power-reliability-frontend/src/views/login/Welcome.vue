@@ -10,16 +10,14 @@
 
       <div class="welcome-main-content">
         <div class="welcome__title">
-          <i class="el-icon-success"/>恭喜您，已成功安装悟空CRM
+          <i class="el-icon-success"/>欢迎使用低压供电可靠性全流程管控系统
         </div>
 
-        <div class="welcome__des">您已成功安装悟空CRM，您可以尽情享用悟空CRM开源版所有功能及服务。在使用悟空CRM前，
-        您需要完成您的账户验证，以及初始化管理员的登录密码。</div>
+        <div class="welcome__des">系统部署成功，请完成管理员账号初始化设置。</div>
 
         <div class="welcome__main">
-          <div class="welcome__tips">你需要通过手机号来<a href="https://www.72crm.com/crm/#/login?type=register" target="_blank">注册悟空ID</a>，该手机号将作为您登录系统的管理员帐号。
-          注册成功后，您需要进入【悟空个人中心】，点击【开源版下载】<a href="https://www.72crm.com/user/company_info" target="_blank">获取您的验证码</a>
-            如您已经注册悟空ID，您只需要点击<a href="https://www.72crm.com/user/company_info" target="_blank">登录个人中心</a>即可查看您的验证码</div>
+          <div class="welcome__tips">请设置管理员账号和密码，该账号将作为您登录系统的管理员帐号。
+          设置完成后即可进入系统进行业务管理。</div>
 
           <login-by-welcome />
         </div>
