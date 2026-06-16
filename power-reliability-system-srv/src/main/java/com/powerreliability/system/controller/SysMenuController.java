@@ -22,7 +22,7 @@ public class SysMenuController {
     @Autowired
     private ISysOperationLogService sysOperationLogService;
 
-    @PostMapping("/tree")
+    @GetMapping("/tree")
     public Result<List<SysMenu>> tree() {
         List<SysMenu> allMenus = sysMenuService.list(
                 new LambdaQueryWrapper<SysMenu>().orderByAsc(SysMenu::getSortOrder));
@@ -49,7 +49,7 @@ public class SysMenuController {
         return Result.ok();
     }
 
-    @PostMapping("/update")
+    @PutMapping("/update")
     public Result<Void> update(@RequestBody SysMenu menu, HttpServletRequest httpRequest) {
         sysMenuService.updateById(menu);
         sysOperationLogService.record(0L, "系统管理", "更新菜单",
@@ -57,9 +57,8 @@ public class SysMenuController {
         return Result.ok();
     }
 
-    @PostMapping("/delete/{id}")
+    @DeleteMapping("/delete/{id}")
     public Result<Void> delete(@PathVariable Long id, HttpServletRequest httpRequest) {
-        // 检查是否有子菜单
         List<SysMenu> children = sysMenuService.list(
                 new LambdaQueryWrapper<SysMenu>().eq(SysMenu::getParentId, id));
         if (!children.isEmpty()) {

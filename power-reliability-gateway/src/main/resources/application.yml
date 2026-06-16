@@ -38,5 +38,19 @@ spring:
           uri: lb://power-reliability-system-srv
           predicates:
             - Path=/api/system/**
+
+        - id: power-reliability-notification
+          uri: lb://power-reliability-notification
+          predicates:
+            - Path=/api/notification/**
+          filters:
+            - StripPrefix=1
+
+        - id: power-reliability-job
+          uri: lb://power-reliability-job
+          predicates:
+            - Path=/api/job/**
+          filters:
+            - StripPrefix=1
   main:
     web-application-type: reactive

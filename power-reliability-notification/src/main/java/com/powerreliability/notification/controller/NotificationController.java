@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/notification")
@@ -22,18 +21,16 @@ public class NotificationController {
     @Autowired
     private NotificationService notificationService;
 
-    @PostMapping("/list")
+    @GetMapping("/list")
     @Operation(summary = "分页查询用户通知")
-    public Result<PageResult<Notification>> list(@RequestBody Map<String, Object> params) {
-        int page = params.get("page") != null ? Integer.parseInt(params.get("page").toString()) : 1;
-        int pageSize = params.get("pageSize") != null ? Integer.parseInt(params.get("pageSize").toString()) : 20;
-        Long userId = params.get("userId") != null ? Long.parseLong(params.get("userId").toString()) : null;
-        String type = params.get("type") != null ? params.get("type").toString() : null;
-        Integer isRead = params.get("isRead") != null ? Integer.parseInt(params.get("isRead").toString()) : null;
-
+    public Result<PageResult<Notification>> list(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int pageSize,
+            @RequestParam(required = false) Long userId,
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) Integer isRead) {
         Page<Notification> pageParam = new Page<>(page, pageSize);
         LambdaQueryWrapper<Notification> wrapper = new LambdaQueryWrapper<>();
-
         if (userId != null) {
             wrapper.eq(Notification::getUserId, userId);
         }
@@ -43,10 +40,8 @@ public class NotificationController {
         if (isRead != null) {
             wrapper.eq(Notification::getIsRead, isRead);
         }
-
         wrapper.orderByDesc(Notification::getCreateTime);
         Page<Notification> result = notificationService.page(pageParam, wrapper);
-
         PageResult<Notification> pageResult = PageResult.of(
                 result.getRecords(), result.getTotal(),
                 (int) result.getCurrent(), (int) result.getSize());
@@ -62,10 +57,13 @@ public class NotificationController {
 
     @PostMapping("/batch-read")
     @Operation(summary = "批量已读")
-    public Result<Void> batchRead(@RequestBody Map<String, Object> params) {
-        @SuppressWarnings("unchecked")
-        List<Long> ids = (List<Long>) params.get("ids");
-        notificationService.batchMarkAsRead(ids);
+    public Result<Void> batchRead(@RequestBody BatchReadRequest request) {
+        notificationService.batchMarkAsRead(request.getIds());
         return Result.ok();
+    }
+
+    @lombok.Data
+    public static class BatchReadRequest {
+        private List<Long> ids;
     }
 }

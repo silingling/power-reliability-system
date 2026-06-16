@@ -1,11 +1,9 @@
 import request from '@/utils/request'
+
 export function adminGetBTypeAPI() { return Promise.resolve({ data: [] }) }
 export function userListAPI() { return Promise.resolve({ data: [] }) }
 export function depListAPI() { return Promise.resolve({ data: [] }) }
 export function downloadFileAPI() { return Promise.resolve({}) }
-export function crmFileSaveAPI() { return Promise.resolve({ data: { fileId: '' } }) }
-export function crmFileSaveUrl() { return '' }
-export function crmFileDeleteAPI() { return Promise.resolve({}) }
 export function webFileSaveAPI() { return Promise.resolve({ data: { url: '' } }) }
 export function systemUserInfoAPI() { return Promise.resolve({ data: {} }) }
 export function systemMessageListAPI() { return Promise.resolve({ data: { list: [] } }) }

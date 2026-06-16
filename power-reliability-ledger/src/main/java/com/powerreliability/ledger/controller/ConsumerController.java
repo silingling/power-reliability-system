@@ -22,28 +22,35 @@ public class ConsumerController {
     /**
      * 分页查询用户
      */
-    @PostMapping("/consumer/list")
-    public Result<PageResult<Consumer>> list(@RequestBody ConsumerQuery query) {
-        Page<Consumer> page = new Page<>(query.getPage(), query.getPageSize());
+    @GetMapping("/consumer/list")
+    public Result<PageResult<Consumer>> list(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int pageSize,
+            @RequestParam(required = false) String consumerNo,
+            @RequestParam(required = false) String consumerName,
+            @RequestParam(required = false) String areaCode,
+            @RequestParam(required = false) Integer consumerType,
+            @RequestParam(required = false) Integer status) {
+        Page<Consumer> pageParam = new Page<>(page, pageSize);
         LambdaQueryWrapper<Consumer> wrapper = new LambdaQueryWrapper<>();
-        if (StringUtils.hasText(query.getConsumerNo())) {
-            wrapper.like(Consumer::getConsumerNo, query.getConsumerNo());
+        if (StringUtils.hasText(consumerNo)) {
+            wrapper.like(Consumer::getConsumerNo, consumerNo);
         }
-        if (StringUtils.hasText(query.getConsumerName())) {
-            wrapper.like(Consumer::getConsumerName, query.getConsumerName());
+        if (StringUtils.hasText(consumerName)) {
+            wrapper.like(Consumer::getConsumerName, consumerName);
         }
-        if (StringUtils.hasText(query.getAreaCode())) {
-            wrapper.eq(Consumer::getAreaCode, query.getAreaCode());
+        if (StringUtils.hasText(areaCode)) {
+            wrapper.eq(Consumer::getAreaCode, areaCode);
         }
-        if (query.getConsumerType() != null) {
-            wrapper.eq(Consumer::getConsumerType, query.getConsumerType());
+        if (consumerType != null) {
+            wrapper.eq(Consumer::getConsumerType, consumerType);
         }
-        if (query.getStatus() != null) {
-            wrapper.eq(Consumer::getStatus, query.getStatus());
+        if (status != null) {
+            wrapper.eq(Consumer::getStatus, status);
         }
         wrapper.orderByDesc(Consumer::getUpdateTime);
-        consumerService.page(page, wrapper);
-        PageResult<Consumer> pageResult = PageResult.of(page.getRecords(), page.getTotal(), query.getPage(), query.getPageSize());
+        consumerService.page(pageParam, wrapper);
+        PageResult<Consumer> pageResult = PageResult.of(pageParam.getRecords(), pageParam.getTotal(), page, pageSize);
         return Result.ok(pageResult);
     }
 
@@ -59,7 +66,7 @@ public class ConsumerController {
     /**
      * 更新用户
      */
-    @PostMapping("/consumer/update")
+    @PutMapping("/consumer/update")
     public Result<Void> update(@RequestBody Consumer consumer) {
         consumerService.updateById(consumer);
         return Result.ok();
@@ -68,7 +75,7 @@ public class ConsumerController {
     /**
      * 用户详情
      */
-    @PostMapping("/consumer/detail/{id}")
+    @GetMapping("/consumer/detail/{id}")
     public Result<Consumer> detail(@PathVariable Long id) {
         Consumer consumer = consumerService.getById(id);
         return Result.ok(consumer);
@@ -77,7 +84,7 @@ public class ConsumerController {
     /**
      * 删除用户
      */
-    @PostMapping("/consumer/delete/{id}")
+    @DeleteMapping("/consumer/delete/{id}")
     public Result<Void> delete(@PathVariable Long id) {
         consumerService.removeById(id);
         return Result.ok();
@@ -94,34 +101,6 @@ public class ConsumerController {
                .set(Consumer::getAreaCode, request.getAreaCode());
         consumerService.update(wrapper);
         return Result.ok();
-    }
-
-    /**
-     * 用户分页查询参数
-     */
-    public static class ConsumerQuery {
-        private int page = 1;
-        private int pageSize = 20;
-        private String consumerNo;
-        private String consumerName;
-        private String areaCode;
-        private Integer consumerType;
-        private Integer status;
-
-        public int getPage() { return page; }
-        public void setPage(int page) { this.page = page; }
-        public int getPageSize() { return pageSize; }
-        public void setPageSize(int pageSize) { this.pageSize = pageSize; }
-        public String getConsumerNo() { return consumerNo; }
-        public void setConsumerNo(String consumerNo) { this.consumerNo = consumerNo; }
-        public String getConsumerName() { return consumerName; }
-        public void setConsumerName(String consumerName) { this.consumerName = consumerName; }
-        public String getAreaCode() { return areaCode; }
-        public void setAreaCode(String areaCode) { this.areaCode = areaCode; }
-        public Integer getConsumerType() { return consumerType; }
-        public void setConsumerType(Integer consumerType) { this.consumerType = consumerType; }
-        public Integer getStatus() { return status; }
-        public void setStatus(Integer status) { this.status = status; }
     }
 
     /**

@@ -31,24 +31,25 @@ public class GovernanceOrderController {
     /**
      * 分页查询工单
      */
-    @PostMapping("/order/list")
-    public Result<Page<GovernanceOrder>> list(@RequestBody Map<String, Object> params) {
-        Integer pageNum = params.get("pageNum") != null ? Integer.parseInt(params.get("pageNum").toString()) : 1;
-        Integer pageSize = params.get("pageSize") != null ? Integer.parseInt(params.get("pageSize").toString()) : 10;
-
+    @GetMapping("/order/list")
+    @Operation(summary = "分页查询治理工单")
+    public Result<Page<GovernanceOrder>> list(
+            @RequestParam(defaultValue = "1") Integer pageNum,
+            @RequestParam(defaultValue = "10") Integer pageSize,
+            @RequestParam(required = false) Integer status,
+            @RequestParam(required = false) String eventId,
+            @RequestParam(required = false) String responsibleUnit) {
         Page<GovernanceOrder> page = new Page<>(pageNum, pageSize);
         LambdaQueryWrapper<GovernanceOrder> wrapper = new LambdaQueryWrapper<>();
-
-        if (params.get("status") != null && !params.get("status").toString().isEmpty()) {
-            wrapper.eq(GovernanceOrder::getStatus, Integer.parseInt(params.get("status").toString()));
+        if (status != null) {
+            wrapper.eq(GovernanceOrder::getStatus, status);
         }
-        if (params.get("eventId") != null && !params.get("eventId").toString().isEmpty()) {
-            wrapper.eq(GovernanceOrder::getEventId, params.get("eventId").toString());
+        if (eventId != null && !eventId.isEmpty()) {
+            wrapper.eq(GovernanceOrder::getEventId, eventId);
         }
-        if (params.get("responsibleUnit") != null && !params.get("responsibleUnit").toString().isEmpty()) {
-            wrapper.eq(GovernanceOrder::getResponsibleUnit, params.get("responsibleUnit").toString());
+        if (responsibleUnit != null && !responsibleUnit.isEmpty()) {
+            wrapper.eq(GovernanceOrder::getResponsibleUnit, responsibleUnit);
         }
-
         wrapper.orderByDesc(GovernanceOrder::getCreateTime);
         return Result.success(governanceOrderService.page(page, wrapper));
     }
@@ -57,6 +58,7 @@ public class GovernanceOrderController {
      * 创建工单
      */
     @PostMapping("/order/create")
+    @Operation(summary = "创建治理工单")
     public Result<GovernanceOrder> create(@RequestBody GovernanceOrder order) {
         order.setId(null);
         order.setStatus(0);
@@ -71,6 +73,7 @@ public class GovernanceOrderController {
      * 分配工单
      */
     @PostMapping("/order/dispatch")
+    @Operation(summary = "分配治理工单")
     public Result<Void> dispatch(@RequestBody Map<String, Object> params) {
         Long id = Long.parseLong(params.get("id").toString());
         String unit = params.get("responsibleUnit").toString();
@@ -88,6 +91,7 @@ public class GovernanceOrderController {
      * 提交审核
      */
     @PostMapping("/order/submit/{id}")
+    @Operation(summary = "提交审核")
     public Result<Void> submit(@PathVariable Long id) {
         try {
             governanceOrderService.submitForReview(id);
@@ -101,6 +105,7 @@ public class GovernanceOrderController {
      * 审核工单
      */
     @PostMapping("/order/accept/{id}")
+    @Operation(summary = "审核治理工单")
     public Result<Void> accept(@PathVariable Long id, @RequestBody Map<String, Object> params) {
         Integer result = Integer.parseInt(params.get("result").toString());
         try {
@@ -116,25 +121,29 @@ public class GovernanceOrderController {
      */
     @PostMapping("/order/export")
     @Operation(summary = "导出治理工单Excel")
-    public void export(@RequestBody Map<String, Object> params, HttpServletResponse response) {
+    public void export(
+            HttpServletResponse response,
+            @RequestParam(required = false) Integer status,
+            @RequestParam(required = false) String eventId,
+            @RequestParam(required = false) String responsibleUnit,
+            @RequestParam(required = false) String responsiblePerson,
+            @RequestParam(required = false) String orderNo) {
         LambdaQueryWrapper<GovernanceOrder> wrapper = new LambdaQueryWrapper<>();
-
-        if (params.get("status") != null && !params.get("status").toString().isEmpty()) {
-            wrapper.eq(GovernanceOrder::getStatus, Integer.parseInt(params.get("status").toString()));
+        if (status != null) {
+            wrapper.eq(GovernanceOrder::getStatus, status);
         }
-        if (params.get("eventId") != null && !params.get("eventId").toString().isEmpty()) {
-            wrapper.eq(GovernanceOrder::getEventId, params.get("eventId").toString());
+        if (eventId != null && !eventId.isEmpty()) {
+            wrapper.eq(GovernanceOrder::getEventId, eventId);
         }
-        if (params.get("responsibleUnit") != null && !params.get("responsibleUnit").toString().isEmpty()) {
-            wrapper.eq(GovernanceOrder::getResponsibleUnit, params.get("responsibleUnit").toString());
+        if (responsibleUnit != null && !responsibleUnit.isEmpty()) {
+            wrapper.eq(GovernanceOrder::getResponsibleUnit, responsibleUnit);
         }
-        if (params.get("responsiblePerson") != null && !params.get("responsiblePerson").toString().isEmpty()) {
-            wrapper.eq(GovernanceOrder::getResponsiblePerson, params.get("responsiblePerson").toString());
+        if (responsiblePerson != null && !responsiblePerson.isEmpty()) {
+            wrapper.eq(GovernanceOrder::getResponsiblePerson, responsiblePerson);
         }
-        if (params.get("orderNo") != null && !params.get("orderNo").toString().isEmpty()) {
-            wrapper.like(GovernanceOrder::getOrderNo, params.get("orderNo").toString());
+        if (orderNo != null && !orderNo.isEmpty()) {
+            wrapper.like(GovernanceOrder::getOrderNo, orderNo);
         }
-
         wrapper.orderByDesc(GovernanceOrder::getCreateTime);
         List<GovernanceOrder> list = governanceOrderService.list(wrapper);
         ExcelExportUtil.export(response, list, "治理工单导出");

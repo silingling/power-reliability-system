@@ -20,31 +20,39 @@ public class EquipmentController {
     /**
      * 分页查询设备
      */
-    @PostMapping("/equipment/list")
-    public Result<PageResult<Equipment>> list(@RequestBody EquipmentQuery query) {
-        Page<Equipment> page = new Page<>(query.getPage(), query.getPageSize());
+    @GetMapping("/equipment/list")
+    public Result<PageResult<Equipment>> list(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int pageSize,
+            @RequestParam(required = false) String equipmentCode,
+            @RequestParam(required = false) String equipmentName,
+            @RequestParam(required = false) Integer equipmentType,
+            @RequestParam(required = false) String areaCode,
+            @RequestParam(required = false) String lineCode,
+            @RequestParam(required = false) Integer equipmentStatus) {
+        Page<Equipment> pageParam = new Page<>(page, pageSize);
         LambdaQueryWrapper<Equipment> wrapper = new LambdaQueryWrapper<>();
-        if (StringUtils.hasText(query.getEquipmentCode())) {
-            wrapper.like(Equipment::getEquipmentCode, query.getEquipmentCode());
+        if (StringUtils.hasText(equipmentCode)) {
+            wrapper.like(Equipment::getEquipmentCode, equipmentCode);
         }
-        if (StringUtils.hasText(query.getEquipmentName())) {
-            wrapper.like(Equipment::getEquipmentName, query.getEquipmentName());
+        if (StringUtils.hasText(equipmentName)) {
+            wrapper.like(Equipment::getEquipmentName, equipmentName);
         }
-        if (query.getEquipmentType() != null) {
-            wrapper.eq(Equipment::getEquipmentType, query.getEquipmentType());
+        if (equipmentType != null) {
+            wrapper.eq(Equipment::getEquipmentType, equipmentType);
         }
-        if (StringUtils.hasText(query.getAreaCode())) {
-            wrapper.eq(Equipment::getAreaCode, query.getAreaCode());
+        if (StringUtils.hasText(areaCode)) {
+            wrapper.eq(Equipment::getAreaCode, areaCode);
         }
-        if (StringUtils.hasText(query.getLineCode())) {
-            wrapper.eq(Equipment::getLineCode, query.getLineCode());
+        if (StringUtils.hasText(lineCode)) {
+            wrapper.eq(Equipment::getLineCode, lineCode);
         }
-        if (query.getEquipmentStatus() != null) {
-            wrapper.eq(Equipment::getEquipmentStatus, query.getEquipmentStatus());
+        if (equipmentStatus != null) {
+            wrapper.eq(Equipment::getEquipmentStatus, equipmentStatus);
         }
         wrapper.orderByDesc(Equipment::getUpdateTime);
-        equipmentService.page(page, wrapper);
-        PageResult<Equipment> pageResult = PageResult.of(page.getRecords(), page.getTotal(), query.getPage(), query.getPageSize());
+        equipmentService.page(pageParam, wrapper);
+        PageResult<Equipment> pageResult = PageResult.of(pageParam.getRecords(), pageParam.getTotal(), page, pageSize);
         return Result.ok(pageResult);
     }
 
@@ -60,7 +68,7 @@ public class EquipmentController {
     /**
      * 更新设备
      */
-    @PostMapping("/equipment/update")
+    @PutMapping("/equipment/update")
     public Result<Void> update(@RequestBody Equipment equipment) {
         equipmentService.updateById(equipment);
         return Result.ok();
@@ -69,7 +77,7 @@ public class EquipmentController {
     /**
      * 设备详情
      */
-    @PostMapping("/equipment/detail/{id}")
+    @GetMapping("/equipment/detail/{id}")
     public Result<Equipment> detail(@PathVariable Long id) {
         Equipment equipment = equipmentService.getById(id);
         return Result.ok(equipment);
@@ -78,40 +86,9 @@ public class EquipmentController {
     /**
      * 删除设备
      */
-    @PostMapping("/equipment/delete/{id}")
+    @DeleteMapping("/equipment/delete/{id}")
     public Result<Void> delete(@PathVariable Long id) {
         equipmentService.removeById(id);
         return Result.ok();
-    }
-
-    /**
-     * 设备分页查询参数
-     */
-    public static class EquipmentQuery {
-        private int page = 1;
-        private int pageSize = 20;
-        private String equipmentCode;
-        private String equipmentName;
-        private Integer equipmentType;
-        private String areaCode;
-        private String lineCode;
-        private Integer equipmentStatus;
-
-        public int getPage() { return page; }
-        public void setPage(int page) { this.page = page; }
-        public int getPageSize() { return pageSize; }
-        public void setPageSize(int pageSize) { this.pageSize = pageSize; }
-        public String getEquipmentCode() { return equipmentCode; }
-        public void setEquipmentCode(String equipmentCode) { this.equipmentCode = equipmentCode; }
-        public String getEquipmentName() { return equipmentName; }
-        public void setEquipmentName(String equipmentName) { this.equipmentName = equipmentName; }
-        public Integer getEquipmentType() { return equipmentType; }
-        public void setEquipmentType(Integer equipmentType) { this.equipmentType = equipmentType; }
-        public String getAreaCode() { return areaCode; }
-        public void setAreaCode(String areaCode) { this.areaCode = areaCode; }
-        public String getLineCode() { return lineCode; }
-        public void setLineCode(String lineCode) { this.lineCode = lineCode; }
-        public Integer getEquipmentStatus() { return equipmentStatus; }
-        public void setEquipmentStatus(Integer equipmentStatus) { this.equipmentStatus = equipmentStatus; }
     }
 }

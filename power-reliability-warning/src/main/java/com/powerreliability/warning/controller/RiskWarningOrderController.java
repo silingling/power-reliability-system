@@ -4,12 +4,16 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.powerreliability.common.entity.PageResult;
 import com.powerreliability.common.entity.Result;
+import com.powerreliability.common.util.ExcelExportUtil;
 import com.powerreliability.warning.entity.RiskWarningOrder;
 import com.powerreliability.warning.service.RiskWarningOrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Tag(name = "隐患预警工单管理")
 @RestController
@@ -20,35 +24,64 @@ public class RiskWarningOrderController {
     private final RiskWarningOrderService riskWarningOrderService;
 
     @Operation(summary = "分页查询预警工单列表")
-    @PostMapping("/order/list")
-    public Result<PageResult<RiskWarningOrder>> list(@RequestBody(required = false) WarningOrderQuery query) {
-        if (query == null) {
-            query = new WarningOrderQuery();
-        }
-        Page<RiskWarningOrder> page = new Page<>(query.getPage(), query.getPageSize());
+    @GetMapping("/order/list")
+    public Result<PageResult<RiskWarningOrder>> list(
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer pageSize,
+            @RequestParam(required = false) Integer disposeStatus,
+            @RequestParam(required = false) Integer urgencyLevel,
+            @RequestParam(required = false) Integer warningType,
+            @RequestParam(required = false) Long equipmentId,
+            @RequestParam(required = false) String keywords) {
+        if (page == null) page = 1;
+        if (pageSize == null) pageSize = 10;
+        Page<RiskWarningOrder> pageParam = new Page<>(page, pageSize);
         LambdaQueryWrapper<RiskWarningOrder> wrapper = new LambdaQueryWrapper<>();
-        if (query.getDisposeStatus() != null) {
-            wrapper.eq(RiskWarningOrder::getDisposeStatus, query.getDisposeStatus());
+        if (disposeStatus != null) {
+            wrapper.eq(RiskWarningOrder::getDisposeStatus, disposeStatus);
         }
-        if (query.getUrgencyLevel() != null) {
-            wrapper.eq(RiskWarningOrder::getUrgencyLevel, query.getUrgencyLevel());
+        if (urgencyLevel != null) {
+            wrapper.eq(RiskWarningOrder::getUrgencyLevel, urgencyLevel);
         }
-        if (query.getWarningType() != null) {
-            wrapper.eq(RiskWarningOrder::getWarningType, query.getWarningType());
+        if (warningType != null) {
+            wrapper.eq(RiskWarningOrder::getWarningType, warningType);
         }
-        if (query.getEquipmentId() != null) {
-            wrapper.eq(RiskWarningOrder::getEquipmentId, query.getEquipmentId());
+        if (equipmentId != null) {
+            wrapper.eq(RiskWarningOrder::getEquipmentId, equipmentId);
         }
-        if (query.getKeywords() != null && !query.getKeywords().isEmpty()) {
-            wrapper.like(RiskWarningOrder::getWarningTitle, query.getKeywords())
-                    .or(w -> w.like(RiskWarningOrder::getWarningContent, query.getKeywords()));
+        if (keywords != null && !keywords.isEmpty()) {
+            wrapper.like(RiskWarningOrder::getWarningTitle, keywords)
+                    .or(w -> w.like(RiskWarningOrder::getWarningContent, keywords));
         }
         wrapper.orderByDesc(RiskWarningOrder::getCreateTime);
-        riskWarningOrderService.page(page, wrapper);
-        return Result.ok(PageResult.of(page.getRecords(), page.getTotal(), page.getCurrent(), page.getSize()));
+        riskWarningOrderService.page(pageParam, wrapper);
+        return Result.ok(PageResult.of(pageParam.getRecords(), pageParam.getTotal(), pageParam.getCurrent(), pageParam.getSize()));
     }
 
-    @Operation(summary = "自动生成预警工单（从预判记录下发）")
+    @Operation(summary = "导出预警工单Excel")
+    @PostMapping("/order/export")
+    public void export(
+            HttpServletResponse response,
+            @RequestParam(required = false) Integer disposeStatus,
+            @RequestParam(required = false) Integer urgencyLevel,
+            @RequestParam(required = false) Integer warningType,
+            @RequestParam(required = false) Long equipmentId,
+            @RequestParam(required = false) String keywords) {
+        LambdaQueryWrapper<RiskWarningOrder> wrapper = new LambdaQueryWrapper<>();
+        if (disposeStatus != null) wrapper.eq(RiskWarningOrder::getDisposeStatus, disposeStatus);
+        if (urgencyLevel != null) wrapper.eq(RiskWarningOrder::getUrgencyLevel, urgencyLevel);
+        if (warningType != null) wrapper.eq(RiskWarningOrder::getWarningType, warningType);
+        if (equipmentId != null) wrapper.eq(RiskWarningOrder::getEquipmentId, equipmentId);
+        if (keywords != null && !keywords.isEmpty()) {
+            wrapper.like(RiskWarningOrder::getWarningTitle, keywords)
+                    .or(w -> w.like(RiskWarningOrder::getWarningContent, keywords));
+        }
+        wrapper.orderByDesc(RiskWarningOrder::getCreateTime);
+        List<RiskWarningOrder> list = riskWarningOrderService.list(wrapper);
+        ExcelExportUtil.export(response, list, "预警工单导出");
+    }
+
+    @Operation(summary = "自动生成预警工单")
     @PostMapping("/order/dispatch")
     public Result<String> dispatch() {
         int count = riskWarningOrderService.dispatchWarning();
@@ -73,18 +106,6 @@ public class RiskWarningOrderController {
             return Result.fail("复核失败，请检查工单状态");
         }
         return Result.ok("复核完成");
-    }
-
-    /** 分页查询参数 */
-    @lombok.Data
-    public static class WarningOrderQuery {
-        private Integer page = 1;
-        private Integer pageSize = 10;
-        private Integer disposeStatus;
-        private Integer urgencyLevel;
-        private Integer warningType;
-        private Long equipmentId;
-        private String keywords;
     }
 
     @lombok.Data

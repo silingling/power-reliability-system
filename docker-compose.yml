@@ -174,6 +174,36 @@ services:
     networks:
       - pr-network
 
+  notification:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE: power-reliability-notification
+    container_name: pr-notification
+    ports:
+      - "8089:8089"
+    depends_on:
+      - nacos
+      - mysql
+    networks:
+      - pr-network
+
+  job:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        MODULE: power-reliability-job
+    container_name: pr-job
+    ports:
+      - "8090:8090"
+    depends_on:
+      - nacos
+      - mysql
+    networks:
+      - pr-network
+
 networks:
   pr-network:
     driver: bridge

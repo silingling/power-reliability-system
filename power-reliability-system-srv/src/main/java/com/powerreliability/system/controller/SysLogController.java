@@ -5,12 +5,13 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.powerreliability.common.entity.PageResult;
 import com.powerreliability.common.entity.Result;
-import com.powerreliability.system.dto.LogQuery;
 import com.powerreliability.system.entity.SysOperationLog;
 import com.powerreliability.system.service.ISysOperationLogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
+
+import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api/system/log")
@@ -19,32 +20,38 @@ public class SysLogController {
     @Autowired
     private ISysOperationLogService sysOperationLogService;
 
-    @PostMapping("/list")
-    public Result<PageResult<SysOperationLog>> list(@RequestBody LogQuery query) {
+    @GetMapping("/list")
+    public Result<PageResult<SysOperationLog>> list(
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "20") Integer pageSize,
+            @RequestParam(required = false) String module,
+            @RequestParam(required = false) String action,
+            @RequestParam(required = false) String username,
+            @RequestParam(required = false) String startTime,
+            @RequestParam(required = false) String endTime) {
         LambdaQueryWrapper<SysOperationLog> wrapper = new LambdaQueryWrapper<>();
-        if (StringUtils.hasText(query.getModule())) {
-            wrapper.eq(SysOperationLog::getModule, query.getModule());
+        if (StringUtils.hasText(module)) {
+            wrapper.eq(SysOperationLog::getModule, module);
         }
-        if (StringUtils.hasText(query.getAction())) {
-            wrapper.eq(SysOperationLog::getAction, query.getAction());
+        if (StringUtils.hasText(action)) {
+            wrapper.eq(SysOperationLog::getAction, action);
         }
-        if (StringUtils.hasText(query.getUsername())) {
-            wrapper.like(SysOperationLog::getUsername, query.getUsername());
+        if (StringUtils.hasText(username)) {
+            wrapper.like(SysOperationLog::getUsername, username);
         }
-        if (query.getStartTime() != null) {
-            wrapper.ge(SysOperationLog::getOperationTime, query.getStartTime());
+        if (startTime != null) {
+            wrapper.ge(SysOperationLog::getOperationTime, LocalDateTime.parse(startTime));
         }
-        if (query.getEndTime() != null) {
-            wrapper.le(SysOperationLog::getOperationTime, query.getEndTime());
+        if (endTime != null) {
+            wrapper.le(SysOperationLog::getOperationTime, LocalDateTime.parse(endTime));
         }
         wrapper.orderByDesc(SysOperationLog::getOperationTime);
 
-        IPage<SysOperationLog> page = sysOperationLogService.page(
-                new Page<>(query.getPage(), query.getPageSize()), wrapper);
-        return Result.ok(PageResult.of(page.getRecords(), page.getTotal(), query.getPage(), query.getPageSize()));
+        IPage<SysOperationLog> resultPage = sysOperationLogService.page(new Page<>(page, pageSize), wrapper);
+        return Result.ok(PageResult.of(resultPage.getRecords(), resultPage.getTotal(), page, pageSize));
     }
 
-    @PostMapping("/detail/{id}")
+    @GetMapping("/detail/{id}")
     public Result<SysOperationLog> detail(@PathVariable Long id) {
         SysOperationLog log = sysOperationLogService.getById(id);
         if (log == null) {

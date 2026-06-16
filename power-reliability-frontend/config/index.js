@@ -18,18 +18,13 @@ module.exports = {
     assetsPublicPath: '/',
     proxyTable: {
       '/api': {
-        target: 'http://localhost:8080/',
-        changeOrigin: true,
-        pathRewrite: {
-          '^/api': ''
-        }
+        target: 'http://localhost:8080/', // Gateway 地址
+        changeOrigin: true
+        // 注意: 后端 Controller 路径以 /api/ 开头，前端直接传 /api/xxx，所以不需要 pathRewrite
       },
       '/file': {
-        target: 'http://localhost:8080/',//此处代理的不对，待完善
-        changeOrigin: true,
-        pathRewrite: {
-          '^/file': ''
-        }
+        target: 'http://localhost:8080/',
+        changeOrigin: true
       },
     },
 

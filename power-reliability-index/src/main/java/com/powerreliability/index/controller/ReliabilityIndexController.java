@@ -13,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -31,25 +30,25 @@ public class ReliabilityIndexController {
     /**
      * 分页查询指标
      */
-    @PostMapping("/list")
+    @GetMapping("/list")
     @Operation(summary = "分页查询可靠性指标")
-    public Result<Page<ReliabilityIndex>> list(@RequestBody Map<String, Object> params) {
-        Integer pageNum = params.get("pageNum") != null ? Integer.parseInt(params.get("pageNum").toString()) : 1;
-        Integer pageSize = params.get("pageSize") != null ? Integer.parseInt(params.get("pageSize").toString()) : 10;
-
+    public Result<Page<ReliabilityIndex>> list(
+            @RequestParam(defaultValue = "1") Integer pageNum,
+            @RequestParam(defaultValue = "10") Integer pageSize,
+            @RequestParam(required = false) Long statType,
+            @RequestParam(required = false) Long targetId,
+            @RequestParam(required = false) Integer period) {
         Page<ReliabilityIndex> page = new Page<>(pageNum, pageSize);
         LambdaQueryWrapper<ReliabilityIndex> wrapper = new LambdaQueryWrapper<>();
-
-        if (params.get("statType") != null && !params.get("statType").toString().isEmpty()) {
-            wrapper.eq(ReliabilityIndex::getStatType, Long.parseLong(params.get("statType").toString()));
+        if (statType != null) {
+            wrapper.eq(ReliabilityIndex::getStatType, statType);
         }
-        if (params.get("targetId") != null && !params.get("targetId").toString().isEmpty()) {
-            wrapper.eq(ReliabilityIndex::getTargetId, Long.parseLong(params.get("targetId").toString()));
+        if (targetId != null) {
+            wrapper.eq(ReliabilityIndex::getTargetId, targetId);
         }
-        if (params.get("period") != null && !params.get("period").toString().isEmpty()) {
-            wrapper.eq(ReliabilityIndex::getPeriod, Integer.parseInt(params.get("period").toString()));
+        if (period != null) {
+            wrapper.eq(ReliabilityIndex::getPeriod, period);
         }
-
         wrapper.orderByDesc(ReliabilityIndex::getStatDate);
         return Result.success(reliabilityIndexService.page(page, wrapper));
     }
@@ -65,7 +64,6 @@ public class ReliabilityIndexController {
         Integer period = Integer.parseInt(params.get("period").toString());
         LocalDate start = LocalDate.parse(params.get("start").toString());
         LocalDate end = params.get("end") != null ? LocalDate.parse(params.get("end").toString()) : start;
-
         Long id = reliabilityIndexService.calculateIndex(statType, targetId, period, start, end);
         return Result.success(id);
     }
@@ -73,22 +71,20 @@ public class ReliabilityIndexController {
     /**
      * 趋势对比查询
      */
-    @PostMapping("/compare")
+    @GetMapping("/compare")
     @Operation(summary = "趋势对比查询")
-    public Result<List<ReliabilityIndex>> compare(@RequestBody Map<String, Object> params) {
-        Long statType = Long.parseLong(params.get("statType").toString());
-        Long targetId = Long.parseLong(params.get("targetId").toString());
-        Integer period = Integer.parseInt(params.get("period").toString());
-        LocalDate start = LocalDate.parse(params.get("start").toString());
-        LocalDate end = LocalDate.parse(params.get("end").toString());
-
+    public Result<List<ReliabilityIndex>> compare(
+            @RequestParam Long statType,
+            @RequestParam Long targetId,
+            @RequestParam Integer period,
+            @RequestParam String start,
+            @RequestParam String end) {
         LambdaQueryWrapper<ReliabilityIndex> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(ReliabilityIndex::getStatType, statType)
                .eq(ReliabilityIndex::getTargetId, targetId)
                .eq(ReliabilityIndex::getPeriod, period)
-               .between(ReliabilityIndex::getStatDate, start, end)
+               .between(ReliabilityIndex::getStatDate, LocalDate.parse(start), LocalDate.parse(end))
                .orderByAsc(ReliabilityIndex::getStatDate);
-
         return Result.success(reliabilityIndexService.list(wrapper));
     }
 
@@ -97,25 +93,29 @@ public class ReliabilityIndexController {
      */
     @PostMapping("/export")
     @Operation(summary = "导出可靠性指标Excel")
-    public void export(@RequestBody Map<String, Object> params, HttpServletResponse response) {
+    public void export(
+            HttpServletResponse response,
+            @RequestParam(required = false) Long statType,
+            @RequestParam(required = false) Long targetId,
+            @RequestParam(required = false) Integer period,
+            @RequestParam(required = false) String start,
+            @RequestParam(required = false) String end) {
         LambdaQueryWrapper<ReliabilityIndex> wrapper = new LambdaQueryWrapper<>();
-
-        if (params.get("statType") != null && !params.get("statType").toString().isEmpty()) {
-            wrapper.eq(ReliabilityIndex::getStatType, Long.parseLong(params.get("statType").toString()));
+        if (statType != null) {
+            wrapper.eq(ReliabilityIndex::getStatType, statType);
         }
-        if (params.get("targetId") != null && !params.get("targetId").toString().isEmpty()) {
-            wrapper.eq(ReliabilityIndex::getTargetId, Long.parseLong(params.get("targetId").toString()));
+        if (targetId != null) {
+            wrapper.eq(ReliabilityIndex::getTargetId, targetId);
         }
-        if (params.get("period") != null && !params.get("period").toString().isEmpty()) {
-            wrapper.eq(ReliabilityIndex::getPeriod, Integer.parseInt(params.get("period").toString()));
+        if (period != null) {
+            wrapper.eq(ReliabilityIndex::getPeriod, period);
         }
-        if (params.get("start") != null && !params.get("start").toString().isEmpty()) {
-            wrapper.ge(ReliabilityIndex::getStatDate, LocalDate.parse(params.get("start").toString()));
+        if (start != null && !start.isEmpty()) {
+            wrapper.ge(ReliabilityIndex::getStatDate, LocalDate.parse(start));
         }
-        if (params.get("end") != null && !params.get("end").toString().isEmpty()) {
-            wrapper.le(ReliabilityIndex::getStatDate, LocalDate.parse(params.get("end").toString()));
+        if (end != null && !end.isEmpty()) {
+            wrapper.le(ReliabilityIndex::getStatDate, LocalDate.parse(end));
         }
-
         wrapper.orderByDesc(ReliabilityIndex::getStatDate);
         List<ReliabilityIndex> list = reliabilityIndexService.list(wrapper);
         ExcelExportUtil.export(response, list, "可靠性指标导出");

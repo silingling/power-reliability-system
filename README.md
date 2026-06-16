@@ -22,8 +22,8 @@
 | 持久层 | MyBatis-Plus 3.5 | ORM 框架 |
 | 数据库 | MySQL 8.0 + Redis 6.0 | 关系库 + 缓存 |
 | API 文档 | Knife4j | 在线接口文档 |
-| 前端 | Vue 3 + Element Plus | PC 管理端 |
-| 可视化 | DataV + ECharts 5.0 | 大屏展示 |
+| 前端 | Vue 2 + Element UI | PC 管理端 |
+| 可视化 | ECharts | 大屏展示 |
 | 部署 | Docker | 容器化部署 |
 
 ## 项目结构

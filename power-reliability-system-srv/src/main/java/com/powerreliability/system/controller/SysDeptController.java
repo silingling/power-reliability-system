@@ -22,7 +22,7 @@ public class SysDeptController {
     @Autowired
     private ISysOperationLogService sysOperationLogService;
 
-    @PostMapping("/tree")
+    @GetMapping("/tree")
     public Result<List<SysDept>> tree() {
         List<SysDept> allDepts = sysDeptService.list(
                 new LambdaQueryWrapper<SysDept>().orderByAsc(SysDept::getSortOrder));
@@ -45,7 +45,7 @@ public class SysDeptController {
         return Result.ok();
     }
 
-    @PostMapping("/update")
+    @PutMapping("/update")
     public Result<Void> update(@RequestBody SysDept dept, HttpServletRequest httpRequest) {
         sysDeptService.updateById(dept);
         sysOperationLogService.record(0L, "系统管理", "更新部门",
@@ -53,9 +53,8 @@ public class SysDeptController {
         return Result.ok();
     }
 
-    @PostMapping("/delete/{id}")
+    @DeleteMapping("/delete/{id}")
     public Result<Void> delete(@PathVariable Long id, HttpServletRequest httpRequest) {
-        // 检查是否有子部门
         List<SysDept> children = sysDeptService.list(
                 new LambdaQueryWrapper<SysDept>().eq(SysDept::getParentId, id));
         if (!children.isEmpty()) {

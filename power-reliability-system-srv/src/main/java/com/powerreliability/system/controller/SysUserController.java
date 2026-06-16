@@ -8,7 +8,6 @@ import com.powerreliability.common.entity.PageResult;
 import com.powerreliability.common.entity.Result;
 import com.powerreliability.system.dto.ResetPasswordRequest;
 import com.powerreliability.system.dto.UserAddRequest;
-import com.powerreliability.system.dto.UserQuery;
 import com.powerreliability.system.entity.SysUser;
 import com.powerreliability.system.entity.SysUserRole;
 import com.powerreliability.system.service.ISysOperationLogService;
@@ -34,31 +33,33 @@ public class SysUserController {
     @Autowired
     private ISysOperationLogService sysOperationLogService;
 
-    @PostMapping("/list")
-    public Result<PageResult<SysUser>> list(@RequestBody UserQuery query) {
+    @GetMapping("/list")
+    public Result<PageResult<SysUser>> list(
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "20") Integer pageSize,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Integer status,
+            @RequestParam(required = false) Long deptId) {
         LambdaQueryWrapper<SysUser> wrapper = new LambdaQueryWrapper<>();
-        if (StringUtils.hasText(query.getKeyword())) {
-            wrapper.like(SysUser::getUsername, query.getKeyword())
-                    .or().like(SysUser::getRealName, query.getKeyword());
+        if (StringUtils.hasText(keyword)) {
+            wrapper.like(SysUser::getUsername, keyword)
+                    .or().like(SysUser::getRealName, keyword);
         }
-        if (query.getStatus() != null) {
-            wrapper.eq(SysUser::getStatus, query.getStatus());
+        if (status != null) {
+            wrapper.eq(SysUser::getStatus, status);
         }
-        if (query.getDeptId() != null) {
-            wrapper.eq(SysUser::getDeptId, query.getDeptId());
+        if (deptId != null) {
+            wrapper.eq(SysUser::getDeptId, deptId);
         }
         wrapper.orderByDesc(SysUser::getCreateTime);
 
-        IPage<SysUser> page = sysUserService.page(
-                new Page<>(query.getPage(), query.getPageSize()), wrapper);
-        // 不返回密码
-        page.getRecords().forEach(u -> u.setPassword(null));
-        return Result.ok(PageResult.of(page.getRecords(), page.getTotal(), query.getPage(), query.getPageSize()));
+        IPage<SysUser> resultPage = sysUserService.page(new Page<>(page, pageSize), wrapper);
+        resultPage.getRecords().forEach(u -> u.setPassword(null));
+        return Result.ok(PageResult.of(resultPage.getRecords(), resultPage.getTotal(), page, pageSize));
     }
 
     @PostMapping("/add")
     public Result<Void> add(@RequestBody UserAddRequest request, HttpServletRequest httpRequest) {
-        // 检查用户名是否已存在
         SysUser existUser = sysUserService.getOne(
                 new LambdaQueryWrapper<SysUser>().eq(SysUser::getUsername, request.getUsername()));
         if (existUser != null) {
@@ -77,7 +78,6 @@ public class SysUserController {
         user.setStatus(request.getStatus() != null ? request.getStatus() : 1);
         sysUserService.save(user);
 
-        // 分配角色
         if (request.getRoleIds() != null && !request.getRoleIds().isEmpty()) {
             for (Long roleId : request.getRoleIds()) {
                 SysUserRole ur = new SysUserRole();
@@ -93,9 +93,8 @@ public class SysUserController {
         return Result.ok();
     }
 
-    @PostMapping("/update")
+    @PutMapping("/update")
     public Result<Void> update(@RequestBody SysUser user, HttpServletRequest httpRequest) {
-        // 不更新密码字段
         user.setPassword(null);
         sysUserService.updateById(user);
         sysOperationLogService.record(user.getId(),
@@ -104,14 +103,13 @@ public class SysUserController {
         return Result.ok();
     }
 
-    @PostMapping("/detail/{id}")
+    @GetMapping("/detail/{id}")
     public Result<SysUser> detail(@PathVariable Long id) {
         SysUser user = sysUserService.getById(id);
         if (user == null) {
             return Result.fail("用户不存在");
         }
         user.setPassword(null);
-        // 查询角色列表
         List<SysUserRole> userRoles = sysUserRoleService.list(
                 new LambdaQueryWrapper<SysUserRole>().eq(SysUserRole::getUserId, id));
         return Result.ok(user);

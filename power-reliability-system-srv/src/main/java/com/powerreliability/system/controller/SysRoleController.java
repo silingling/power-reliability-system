@@ -7,7 +7,6 @@ import com.powerreliability.common.entity.PageResult;
 import com.powerreliability.common.entity.Result;
 import com.powerreliability.system.dto.RoleAddRequest;
 import com.powerreliability.system.dto.RolePermissionRequest;
-import com.powerreliability.system.dto.RoleQuery;
 import com.powerreliability.system.entity.SysRole;
 import com.powerreliability.system.entity.SysRoleMenu;
 import com.powerreliability.system.service.ISysOperationLogService;
@@ -33,21 +32,24 @@ public class SysRoleController {
     @Autowired
     private ISysOperationLogService sysOperationLogService;
 
-    @PostMapping("/list")
-    public Result<PageResult<SysRole>> list(@RequestBody RoleQuery query) {
+    @GetMapping("/list")
+    public Result<PageResult<SysRole>> list(
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "20") Integer pageSize,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Integer status) {
         LambdaQueryWrapper<SysRole> wrapper = new LambdaQueryWrapper<>();
-        if (StringUtils.hasText(query.getKeyword())) {
-            wrapper.like(SysRole::getRoleName, query.getKeyword())
-                    .or().like(SysRole::getRoleKey, query.getKeyword());
+        if (StringUtils.hasText(keyword)) {
+            wrapper.like(SysRole::getRoleName, keyword)
+                    .or().like(SysRole::getRoleKey, keyword);
         }
-        if (query.getStatus() != null) {
-            wrapper.eq(SysRole::getStatus, query.getStatus());
+        if (status != null) {
+            wrapper.eq(SysRole::getStatus, status);
         }
         wrapper.orderByAsc(SysRole::getRoleSort);
 
-        IPage<SysRole> page = sysRoleService.page(
-                new Page<>(query.getPage(), query.getPageSize()), wrapper);
-        return Result.ok(PageResult.of(page.getRecords(), page.getTotal(), query.getPage(), query.getPageSize()));
+        IPage<SysRole> resultPage = sysRoleService.page(new Page<>(page, pageSize), wrapper);
+        return Result.ok(PageResult.of(resultPage.getRecords(), resultPage.getTotal(), page, pageSize));
     }
 
     @PostMapping("/add")
@@ -64,7 +66,7 @@ public class SysRoleController {
         return Result.ok();
     }
 
-    @PostMapping("/update")
+    @PutMapping("/update")
     public Result<Void> update(@RequestBody SysRole role, HttpServletRequest httpRequest) {
         sysRoleService.updateById(role);
         sysOperationLogService.record(0L, "系统管理", "更新角色",
@@ -72,10 +74,9 @@ public class SysRoleController {
         return Result.ok();
     }
 
-    @PostMapping("/delete/{id}")
+    @DeleteMapping("/delete/{id}")
     public Result<Void> delete(@PathVariable Long id, HttpServletRequest httpRequest) {
         sysRoleService.removeById(id);
-        // 同时删除角色菜单关联
         sysRoleMenuService.remove(new LambdaQueryWrapper<SysRoleMenu>().eq(SysRoleMenu::getRoleId, id));
         sysOperationLogService.record(0L, "系统管理", "删除角色",
                 id.toString(), "", "成功", httpRequest.getRemoteAddr());
@@ -84,11 +85,9 @@ public class SysRoleController {
 
     @PostMapping("/permission")
     public Result<Void> assignPermission(@RequestBody RolePermissionRequest request, HttpServletRequest httpRequest) {
-        // 先清除旧的权限关联
         sysRoleMenuService.remove(
                 new LambdaQueryWrapper<SysRoleMenu>().eq(SysRoleMenu::getRoleId, request.getRoleId()));
 
-        // 添加新的权限关联
         if (request.getMenuIds() != null && !request.getMenuIds().isEmpty()) {
             for (Long menuId : request.getMenuIds()) {
                 SysRoleMenu rm = new SysRoleMenu();

@@ -4,12 +4,16 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.powerreliability.common.entity.PageResult;
 import com.powerreliability.common.entity.Result;
+import com.powerreliability.common.util.ExcelExportUtil;
 import com.powerreliability.review.entity.ReviewReport;
 import com.powerreliability.review.service.ReviewReportService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @Tag(name = "停电复盘报告管理")
 @RestController
@@ -20,28 +24,49 @@ public class ReviewReportController {
     private final ReviewReportService reviewReportService;
 
     @Operation(summary = "分页查询复盘报告列表")
-    @PostMapping("/list")
-    public Result<PageResult<ReviewReport>> list(@RequestBody(required = false) ReportQuery query) {
-        if (query == null) {
-            query = new ReportQuery();
-        }
-        Page<ReviewReport> page = new Page<>(query.getPage(), query.getPageSize());
+    @GetMapping("/list")
+    public Result<PageResult<ReviewReport>> list(
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer pageSize,
+            @RequestParam(required = false) Integer outageType,
+            @RequestParam(required = false) Integer reportStatus,
+            @RequestParam(required = false) String outageEventNo,
+            @RequestParam(required = false) String keywords) {
+        Page<ReviewReport> pageParam = new Page<>(page, pageSize);
         LambdaQueryWrapper<ReviewReport> wrapper = new LambdaQueryWrapper<>();
-        if (query.getOutageType() != null) {
-            wrapper.eq(ReviewReport::getOutageType, query.getOutageType());
+        if (outageType != null) {
+            wrapper.eq(ReviewReport::getOutageType, outageType);
         }
-        if (query.getReportStatus() != null) {
-            wrapper.eq(ReviewReport::getReportStatus, query.getReportStatus());
+        if (reportStatus != null) {
+            wrapper.eq(ReviewReport::getReportStatus, reportStatus);
         }
-        if (query.getOutageEventNo() != null && !query.getOutageEventNo().isEmpty()) {
-            wrapper.like(ReviewReport::getOutageEventNo, query.getOutageEventNo());
+        if (outageEventNo != null && !outageEventNo.isEmpty()) {
+            wrapper.like(ReviewReport::getOutageEventNo, outageEventNo);
         }
-        if (query.getKeywords() != null && !query.getKeywords().isEmpty()) {
-            wrapper.like(ReviewReport::getReportTitle, query.getKeywords());
+        if (keywords != null && !keywords.isEmpty()) {
+            wrapper.like(ReviewReport::getReportTitle, keywords);
         }
         wrapper.orderByDesc(ReviewReport::getCreateTime);
-        reviewReportService.page(page, wrapper);
-        return Result.ok(PageResult.of(page.getRecords(), page.getTotal(), page.getCurrent(), page.getSize()));
+        reviewReportService.page(pageParam, wrapper);
+        return Result.ok(PageResult.of(pageParam.getRecords(), pageParam.getTotal(), pageParam.getCurrent(), pageParam.getSize()));
+    }
+
+    @Operation(summary = "导出复盘报告Excel")
+    @PostMapping("/export")
+    public void export(
+            HttpServletResponse response,
+            @RequestParam(required = false) Integer outageType,
+            @RequestParam(required = false) Integer reportStatus,
+            @RequestParam(required = false) String outageEventNo,
+            @RequestParam(required = false) String keywords) {
+        LambdaQueryWrapper<ReviewReport> wrapper = new LambdaQueryWrapper<>();
+        if (outageType != null) wrapper.eq(ReviewReport::getOutageType, outageType);
+        if (reportStatus != null) wrapper.eq(ReviewReport::getReportStatus, reportStatus);
+        if (outageEventNo != null && !outageEventNo.isEmpty()) wrapper.like(ReviewReport::getOutageEventNo, outageEventNo);
+        if (keywords != null && !keywords.isEmpty()) wrapper.like(ReviewReport::getReportTitle, keywords);
+        wrapper.orderByDesc(ReviewReport::getCreateTime);
+        List<ReviewReport> list = reviewReportService.list(wrapper);
+        ExcelExportUtil.export(response, list, "复盘报告导出");
     }
 
     @Operation(summary = "根据停电事件生成复盘报告")
@@ -55,7 +80,7 @@ public class ReviewReportController {
     }
 
     @Operation(summary = "查询复盘报告详情")
-    @PostMapping("/detail/{id}")
+    @GetMapping("/detail/{id}")
     public Result<ReviewReport> detail(@PathVariable Long id) {
         ReviewReport report = reviewReportService.getById(id);
         if (report == null) {
@@ -72,16 +97,6 @@ public class ReviewReportController {
             return Result.fail("发布失败，请检查报告状态是否为草稿");
         }
         return Result.ok("发布成功");
-    }
-
-    @lombok.Data
-    public static class ReportQuery {
-        private Integer page = 1;
-        private Integer pageSize = 10;
-        private Integer outageType;
-        private Integer reportStatus;
-        private String outageEventNo;
-        private String keywords;
     }
 
     @lombok.Data

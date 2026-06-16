@@ -7,7 +7,7 @@ const getLocationOrigin = () => {
 }
 
 // 系统标题配置
-const companyName = '供电可靠性系统'
+const companyName = '低压供电可靠性管控系统'
 const version = 'V1.0.0'
 
 // WebSocket配置模块，由于socket会使vue代理失效，这里使用独立的基础路径

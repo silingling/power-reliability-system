@@ -4,10 +4,12 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.powerreliability.common.entity.PageResult;
 import com.powerreliability.common.entity.Result;
+import com.powerreliability.common.util.ExcelExportUtil;
 import com.powerreliability.review.entity.RectificationTask;
 import com.powerreliability.review.service.RectificationTaskService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,28 +24,49 @@ public class RectificationTaskController {
     private final RectificationTaskService rectificationTaskService;
 
     @Operation(summary = "分页查询整改任务列表")
-    @PostMapping("/list")
-    public Result<PageResult<RectificationTask>> list(@RequestBody(required = false) TaskQuery query) {
-        if (query == null) {
-            query = new TaskQuery();
-        }
-        Page<RectificationTask> page = new Page<>(query.getPage(), query.getPageSize());
+    @GetMapping("/list")
+    public Result<PageResult<RectificationTask>> list(
+            @RequestParam(defaultValue = "1") Integer page,
+            @RequestParam(defaultValue = "10") Integer pageSize,
+            @RequestParam(required = false) Integer taskStatus,
+            @RequestParam(required = false) Integer rectificationType,
+            @RequestParam(required = false) Long reportId,
+            @RequestParam(required = false) String responsibleDept) {
+        Page<RectificationTask> pageParam = new Page<>(page, pageSize);
         LambdaQueryWrapper<RectificationTask> wrapper = new LambdaQueryWrapper<>();
-        if (query.getTaskStatus() != null) {
-            wrapper.eq(RectificationTask::getTaskStatus, query.getTaskStatus());
+        if (taskStatus != null) {
+            wrapper.eq(RectificationTask::getTaskStatus, taskStatus);
         }
-        if (query.getRectificationType() != null) {
-            wrapper.eq(RectificationTask::getRectificationType, query.getRectificationType());
+        if (rectificationType != null) {
+            wrapper.eq(RectificationTask::getRectificationType, rectificationType);
         }
-        if (query.getReportId() != null) {
-            wrapper.eq(RectificationTask::getReportId, query.getReportId());
+        if (reportId != null) {
+            wrapper.eq(RectificationTask::getReportId, reportId);
         }
-        if (query.getResponsibleDept() != null && !query.getResponsibleDept().isEmpty()) {
-            wrapper.eq(RectificationTask::getResponsibleDept, query.getResponsibleDept());
+        if (responsibleDept != null && !responsibleDept.isEmpty()) {
+            wrapper.eq(RectificationTask::getResponsibleDept, responsibleDept);
         }
         wrapper.orderByDesc(RectificationTask::getCreateTime);
-        rectificationTaskService.page(page, wrapper);
-        return Result.ok(PageResult.of(page.getRecords(), page.getTotal(), page.getCurrent(), page.getSize()));
+        rectificationTaskService.page(pageParam, wrapper);
+        return Result.ok(PageResult.of(pageParam.getRecords(), pageParam.getTotal(), pageParam.getCurrent(), pageParam.getSize()));
+    }
+
+    @Operation(summary = "导出整改任务Excel")
+    @PostMapping("/export")
+    public void export(
+            HttpServletResponse response,
+            @RequestParam(required = false) Integer taskStatus,
+            @RequestParam(required = false) Integer rectificationType,
+            @RequestParam(required = false) Long reportId,
+            @RequestParam(required = false) String responsibleDept) {
+        LambdaQueryWrapper<RectificationTask> wrapper = new LambdaQueryWrapper<>();
+        if (taskStatus != null) wrapper.eq(RectificationTask::getTaskStatus, taskStatus);
+        if (rectificationType != null) wrapper.eq(RectificationTask::getRectificationType, rectificationType);
+        if (reportId != null) wrapper.eq(RectificationTask::getReportId, reportId);
+        if (responsibleDept != null && !responsibleDept.isEmpty()) wrapper.eq(RectificationTask::getResponsibleDept, responsibleDept);
+        wrapper.orderByDesc(RectificationTask::getCreateTime);
+        List<RectificationTask> list = rectificationTaskService.list(wrapper);
+        ExcelExportUtil.export(response, list, "整改任务导出");
     }
 
     @Operation(summary = "根据复盘报告生成整改任务")
@@ -74,16 +97,6 @@ public class RectificationTaskController {
             return Result.fail("验收失败，请检查任务状态");
         }
         return Result.ok("验收完成");
-    }
-
-    @lombok.Data
-    public static class TaskQuery {
-        private Integer page = 1;
-        private Integer pageSize = 10;
-        private Integer taskStatus;
-        private Integer rectificationType;
-        private Long reportId;
-        private String responsibleDept;
     }
 
     @lombok.Data

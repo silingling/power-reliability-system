@@ -4,13 +4,16 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.powerreliability.common.entity.PageResult;
 import com.powerreliability.common.entity.Result;
+import com.powerreliability.common.util.ExcelExportUtil;
 import com.powerreliability.outage.entity.FaultOutage;
 import com.powerreliability.outage.service.FaultOutageService;
+import io.swagger.v3.oas.annotations.Operation;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
-import java.util.Map;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/outage/fault")
@@ -19,19 +22,21 @@ public class FaultOutageController {
     @Autowired
     private FaultOutageService faultOutageService;
 
-    @PostMapping("/list")
-    public Result<PageResult<FaultOutage>> list(@RequestBody Map<String, Object> params) {
-        int page = params.get("page") != null ? Integer.parseInt(params.get("page").toString()) : 1;
-        int pageSize = params.get("pageSize") != null ? Integer.parseInt(params.get("pageSize").toString()) : 20;
-
+    @GetMapping("/list")
+    @Operation(summary = "分页查询故障停电列表")
+    public Result<PageResult<FaultOutage>> list(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int pageSize,
+            @RequestParam(required = false) Integer faultLevel,
+            @RequestParam(required = false) Integer faultSource) {
         Page<FaultOutage> pageParam = new Page<>(page, pageSize);
         LambdaQueryWrapper<FaultOutage> wrapper = new LambdaQueryWrapper<>();
 
-        if (params.get("faultLevel") != null && !params.get("faultLevel").toString().isEmpty()) {
-            wrapper.eq(FaultOutage::getFaultLevel, Integer.parseInt(params.get("faultLevel").toString()));
+        if (faultLevel != null) {
+            wrapper.eq(FaultOutage::getFaultLevel, faultLevel);
         }
-        if (params.get("faultSource") != null && !params.get("faultSource").toString().isEmpty()) {
-            wrapper.eq(FaultOutage::getFaultSource, Integer.parseInt(params.get("faultSource").toString()));
+        if (faultSource != null) {
+            wrapper.eq(FaultOutage::getFaultSource, faultSource);
         }
 
         wrapper.orderByDesc(FaultOutage::getCreateTime);
@@ -40,7 +45,26 @@ public class FaultOutageController {
         return Result.ok(pageResult);
     }
 
+    @GetMapping("/export")
+    @Operation(summary = "导出故障停电Excel")
+    public void export(
+            HttpServletResponse response,
+            @RequestParam(required = false) Integer faultLevel,
+            @RequestParam(required = false) Integer faultSource) {
+        LambdaQueryWrapper<FaultOutage> wrapper = new LambdaQueryWrapper<>();
+        if (faultLevel != null) {
+            wrapper.eq(FaultOutage::getFaultLevel, faultLevel);
+        }
+        if (faultSource != null) {
+            wrapper.eq(FaultOutage::getFaultSource, faultSource);
+        }
+        wrapper.orderByDesc(FaultOutage::getCreateTime);
+        List<FaultOutage> list = faultOutageService.list(wrapper);
+        ExcelExportUtil.export(response, list, "故障停电导出");
+    }
+
     @PostMapping("/report")
+    @Operation(summary = "上报故障停电")
     public Result<Void> report(@RequestBody FaultOutage faultOutage) {
         faultOutage.setFaultTime(LocalDateTime.now());
         faultOutage.setFaultSource(2); // 人工上报
@@ -51,7 +75,8 @@ public class FaultOutageController {
         return Result.ok();
     }
 
-    @PostMapping("/detail/{id}")
+    @GetMapping("/detail/{id}")
+    @Operation(summary = "查询故障停电详情")
     public Result<FaultOutage> detail(@PathVariable Long id) {
         FaultOutage faultOutage = faultOutageService.getById(id);
         if (faultOutage == null) {

@@ -18,25 +18,23 @@ public class DashboardController {
     /**
      * 全域总览: 台区总数/正常/超标/风险/隐患数
      */
-    @PostMapping("/overview")
+    @GetMapping("/overview")
     public Result<Map<String, Object>> overview() {
         return Result.ok(dashboardService.overview());
     }
 
     /**
      * 当日/本周/本月停电统计
-     * @param request 包含 period 字段: today/week/month
      */
-    @PostMapping("/outage-stat")
-    public Result<Map<String, Object>> outageStat(@RequestBody Map<String, String> request) {
-        String period = request.getOrDefault("period", "today");
+    @GetMapping("/outage-stat")
+    public Result<Map<String, Object>> outageStat(@RequestParam(defaultValue = "today") String period) {
         return Result.ok(dashboardService.outageStat(period));
     }
 
     /**
      * SAIDI/SAIFI趋势
      */
-    @PostMapping("/index-trend")
+    @GetMapping("/index-trend")
     public Result<List<Map<String, Object>>> indexTrend() {
         return Result.ok(dashboardService.indexTrend());
     }
@@ -44,7 +42,7 @@ public class DashboardController {
     /**
      * 抢修统计: 平均复电时长/完成率
      */
-    @PostMapping("/repair-stat")
+    @GetMapping("/repair-stat")
     public Result<Map<String, Object>> repairStat() {
         return Result.ok(dashboardService.repairStat());
     }
@@ -52,7 +50,7 @@ public class DashboardController {
     /**
      * 治理进度
      */
-    @PostMapping("/governance-progress")
+    @GetMapping("/governance-progress")
     public Result<Map<String, Object>> governanceProgress() {
         return Result.ok(dashboardService.governanceProgress());
     }
@@ -60,7 +58,7 @@ public class DashboardController {
     /**
      * 台区热力图数据
      */
-    @PostMapping("/area-heatmap")
+    @GetMapping("/area-heatmap")
     public Result<List<Map<String, Object>>> areaHeatmap() {
         return Result.ok(dashboardService.areaHeatmap());
     }
@@ -68,7 +66,7 @@ public class DashboardController {
     /**
      * 预警清单
      */
-    @PostMapping("/warning-list")
+    @GetMapping("/warning-list")
     public Result<List<Map<String, Object>>> warningList() {
         return Result.ok(dashboardService.warningList());
     }
@@ -76,7 +74,7 @@ public class DashboardController {
     /**
      * 班组排名
      */
-    @PostMapping("/ranking")
+    @GetMapping("/ranking")
     public Result<List<Map<String, Object>>> ranking() {
         return Result.ok(dashboardService.ranking());
     }
