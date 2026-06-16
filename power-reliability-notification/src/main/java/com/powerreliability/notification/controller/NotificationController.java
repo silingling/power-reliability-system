@@ -62,6 +62,25 @@ public class NotificationController {
         return Result.ok();
     }
 
+    @GetMapping("/count-unread")
+    @Operation(summary = "获取未读消息数量")
+    public Result<Long> countUnread(@RequestParam(required = false) Long userId) {
+        LambdaQueryWrapper<Notification> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Notification::getIsRead, 0);
+        if (userId != null) {
+            wrapper.eq(Notification::getUserId, userId);
+        }
+        long count = notificationService.count(wrapper);
+        return Result.ok(count);
+    }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "删除通知消息")
+    public Result<Void> delete(@PathVariable Long id) {
+        notificationService.removeById(id);
+        return Result.ok();
+    }
+
     @lombok.Data
     public static class BatchReadRequest {
         private List<Long> ids;

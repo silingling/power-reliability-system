@@ -3,74 +3,50 @@ import request from '@/utils/request'
 // 获取消息列表
 export function getMessageList(data) {
   return request({
-    url: 'msg/list',
-    method: 'post',
-    data: data,
-    headers: {
-      'Content-Type': 'application/json;charset=UTF-8'
-    }
+    url: '/api/notification/list',
+    method: 'get',
+    params: data
   })
 }
-/**
- * 列表接口
- * @param {*} data
- *
- */
+
+// 消息类型列表
 export function getTypeList() {
   return request({
-    url: 'msgQueues/listAll',
-    method: 'post',
-    headers: {
-      'Content-Type': 'application/json;charset=UTF-8'
-    }
+    url: '/api/notification/list',
+    method: 'get',
+    params: { page: 1, pageSize: 1 }
   })
 }
+
 // 未读消息数量
 export function getMessageUnreadCount() {
   return request({
-    url: 'msg/countUnread',
-    method: 'post',
-    data: '',
-    headers: {
-      'Content-Type': 'application/json;charset=UTF-8'
-    }
+    url: '/api/notification/count-unread',
+    method: 'get'
   })
 }
 
 // 读取消息
 export function readMessage(data) {
   return request({
-    url: 'msg/read',
-    method: 'post',
-    data: data,
-    headers: {
-      'Content-Type': 'application/json;charset=UTF-8'
-    }
+    url: `/api/notification/read/${data}`,
+    method: 'post'
   })
 }
 
-// 删除消息(单条)
+// 删除消息（单条）
 export function delOne(data) {
   return request({
-    url: 'msg/delOne',
-    method: 'post',
-    data: {id: data},
-    headers: {
-      'Content-Type': 'application/json;charset=UTF-8'
-    }
+    url: `/api/notification/${data}`,
+    method: 'delete'
   })
 }
 
 // 删除已读消息
 export function delReadMessage(data) {
   return request({
-    url: 'msg/delRead',
+    url: '/api/notification/batch-read',
     method: 'post',
-    data: {type: data},
-    headers: {
-      'Content-Type': 'application/json;charset=UTF-8'
-    }
+    data: { ids: data }
   })
 }
-
-

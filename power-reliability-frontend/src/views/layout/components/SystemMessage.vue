@@ -109,14 +109,12 @@
 
 <script>
 import {
-  systemMessageListAPI,
-  systemMessageReadAPI,
-  systemMessageReadAllAPI,
-  systemMessageClearAPI,
-  systemMessageDeleteByIdAPI } from '@/api/common'
-import {
-  crmDownImportErrorAPI
-} from '@/api/crm/common'
+  getMessageList,
+  getMessageUnreadCount,
+  readMessage,
+  delOne,
+  delReadMessage
+} from '@/components/common/message/api'
 import TodayListDetail from '@/views/calendar/components/TodayListDetail'
 import SlideView from '@/components/SlideView'
 import NewDialog from '@/views/oa/notice/NewDialog'
@@ -367,7 +365,7 @@ export default {
       if (this.isUnRead) {
         params.isRead = 0
       }
-      systemMessageListAPI(params)
+      getMessageList(params)
         .then(res => {
           // console.log("===this.res.data.list=="+JSON.stringify(res.data.list))
           this.loading = false
@@ -428,7 +426,7 @@ export default {
      * 读取消息
      */
     readMessageClick(messageId, index) {
-      systemMessageReadAPI({ messageId })
+      readMessage(messageId)
         .then(res => {
           this.list[index].isRead = 1
           this.$emit('update-count')
@@ -444,7 +442,7 @@ export default {
         type: 'warning'
       })
         .then(() => {
-          systemMessageDeleteByIdAPI(messageId)
+          delOne(messageId)
             .then(res => {
               this.list.splice(index, 1)
               this.$emit('update-count')
@@ -472,9 +470,7 @@ export default {
      * 全部标记完成
      */
     allMarkDoneClick() {
-      systemMessageReadAllAPI({
-        label: this.labelValue
-      })
+      delReadMessage(this.labelValue)
         .then(res => {
           this.list.forEach(item => {
             item.isRead = 1

@@ -29,3 +29,31 @@ export function updateDevice(data) {
 export function deleteDevice(id) {
   return request({ url: `${BASE}/equipment/delete/${id}`, method: 'delete' })
 }
+
+// 用户管理（用电用户）
+export function getUserList(data) {
+  return request({ url: `${BASE}/consumer/list`, method: 'get', params: data })
+}
+export function addUser(data) {
+  return request({ url: `${BASE}/consumer/add`, method: 'post', data })
+}
+export function updateUser(data) {
+  return request({ url: `${BASE}/consumer/update`, method: 'put', data })
+}
+export function deleteUser(id) {
+  return request({ url: `${BASE}/consumer/delete/${id}`, method: 'delete' })
+}
+
+// 线路管理
+export function getLineList(data) {
+  return request({ url: `${BASE}/line/list`, method: 'get', params: data })
+}
+export function addLine(data) {
+  return request({ url: `${BASE}/line/add`, method: 'post', data })
+}
+export function updateLine(data) {
+  return request({ url: `${BASE}/line/update`, method: 'put', data })
+}
+export function deleteLine(id) {
+  return request({ url: `${BASE}/line/delete/${id}`, method: 'delete' })
+}

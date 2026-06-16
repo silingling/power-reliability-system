@@ -25,7 +25,7 @@
 </template>
 
 <script>
-import { systemUserInfoAPI } from '@/api/common'
+import request from '@/utils/request'
 import { getImageData } from '@/utils'
 import XRTheme from '@/styles/xr-theme.scss'
 import { mapGetters } from 'vuex'
@@ -122,8 +122,9 @@ export default {
     },
 
     getUserData() {
-      systemUserInfoAPI({
-        userId: this.id
+      request({
+        url: '/api/system/user/detail/' + (this.id || ''),
+        method: 'get'
       })
         .then(res => {
           this.userData = res.data
