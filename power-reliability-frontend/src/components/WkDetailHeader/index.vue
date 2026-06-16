@@ -1,6 +1,6 @@
 <!--
- * @Description: 悟空软件
- * @Author: 悟空
+ * @Description: 同业电力
+ * @Author: 同业电力
  * @Date: 2020-05-27 14:44:51
  * @LastEditTime: 2020-07-03 17:03:34
  * @LastEditors: yang

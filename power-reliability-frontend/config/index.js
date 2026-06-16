@@ -1,12 +1,4 @@
-/*
- * This file is part of Qingyun SmartPark.  
- *   
- * @description  青云智慧园区
- * @link  https://sdqingyun.cn
- * @contact  https://sdqingyun.cn 7*12 9:00-21:00
- */
 'use strict'
-// Template version: 1.2.6
 // see http://vuejs-templates.github.io/webpack for documentation.
 
 const path = require('path')
